@@ -87,7 +87,7 @@ function Customer_Manage_Deliveries() {
   const BASE_URL = "http://127.0.0.1:8000/delivery/";
   const DRIVER_URL = "http://127.0.0.1:8000/driver/drivers/";
   const VEHICLE_URL = "http://127.0.0.1:8000/vehicle/list_vehicles/";
-  const ORDER_URL = "http://127.0.0.1:8000/order/orders/";
+  const ORDER_URL = "http://127.0.0.1:8000/order/user/";
 
   const token = localStorage.getItem("token");
 

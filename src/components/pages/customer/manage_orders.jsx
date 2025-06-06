@@ -529,19 +529,11 @@ function Customer_OrderManagement() {
       phone_number: order.phone_number || "",
     });
 
-    // Set the selected values from the order data
+    // Set the selected values
     setSelectedCountry(order.origin);
-    setSelectedWarehouse(order.warehouse?.id?.toString() || "");
-    setSelectedCategory(order.category?.id?.toString() || "");
-    setSelectedCommodity(order.commodity?.id?.toString() || "");
-
-    // Fetch categories and commodities based on the order's warehouse and category
-    if (order.warehouse?.id) {
-      fetchCategories(order.warehouse.id);
-    }
-    if (order.category?.id) {
-      fetchCommodities(order.category.id);
-    }
+    setSelectedWarehouse(order.warehouse?.id || "");
+    setSelectedCategory(order.category?.id || "");
+    setSelectedCommodity(order.commodity?.id || "");
 
     setIsModalOpen(true);
   };
@@ -688,31 +680,29 @@ function Customer_OrderManagement() {
 
   // Calculate summary metrics
   const summaryMetrics = useMemo(() => {
-    const pendingCount = orders.filter((o) => o.status === "pending").length;
-    const confirmedCount = orders.filter(
-      (o) => o.status === "confirmed"
-    ).length;
-    const rejectedCount = orders.filter((o) => o.status === "rejected").length;
-    const totalValue = orders.reduce(
-      (sum, order) => sum + parseFloat(order.cost_charged || 0),
-      0
-    );
+  const pendingCount = orders.filter((o) => o.status === "pending").length;
+  const confirmedCount = orders.filter((o) => o.status === "confirmed").length;
+  const rejectedCount = orders.filter((o) => o.status === "rejected").length;
+  const totalValue = orders.reduce(
+    (sum, order) => sum + parseFloat(order.cost_charged || 0),
+    0
+  );
 
-    return {
-      total: orders.length,
-      pending: pendingCount,
-      confirmed: confirmedCount,
-      rejected: rejectedCount,
-      totalValue: totalValue.toFixed(2),
-      warehouses: [
-        ...new Set(
-          orders
-            .filter((o) => o.warehouse_detail)
-            .map((o) => o.warehouse_detail.id)
-        ),
-      ].length,
-    };
-  }, [orders]);
+  return {
+    total: orders.length,
+    pending: pendingCount,
+    confirmed: confirmedCount,
+    rejected: rejectedCount,
+    totalValue: totalValue.toFixed(2),
+    warehouses: [
+      ...new Set(
+        orders
+          .filter((o) => o.warehouse_detail)
+          .map((o) => o.warehouse_detail.id)
+      ),
+    ].length,
+  };
+}, [orders]);
 
   const renderCharts = () => {
     if (!orders.length) return null;
@@ -882,10 +872,7 @@ function Customer_OrderManagement() {
                       {costData
                         .filter((item) => item.country === selectedCountry)
                         .map((item) => (
-                          <option
-                            key={item.warehouse}
-                            value={item.warehouse.toString()} // Ensure string comparison
-                          >
+                          <option key={item.warehouse} value={item.warehouse}>
                             {item.warehouse_name}
                           </option>
                         ))}
@@ -913,10 +900,7 @@ function Customer_OrderManagement() {
                             item.warehouse === parseInt(selectedWarehouse)
                         )
                         .map((item) => (
-                          <option
-                            key={item.category}
-                            value={item.category.toString()} // Ensure string comparison
-                          >
+                          <option key={item.category} value={item.category}>
                             {item.category_name}
                           </option>
                         ))}
@@ -945,10 +929,7 @@ function Customer_OrderManagement() {
                             item.category === parseInt(selectedCategory)
                         )
                         .map((item) => (
-                          <option
-                            key={item.commodity}
-                            value={item.commodity.toString()} // Ensure string comparison
-                          >
+                          <option key={item.commodity} value={item.commodity}>
                             {item.commodity_name} ({item.commodity_unit})
                           </option>
                         ))}
@@ -1288,13 +1269,13 @@ function Customer_OrderManagement() {
                   )}
                 </div>
 
-                {/* <button
+                <button
                   onClick={openCreateModal}
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg shadow-sm hover:bg-green-700 transition"
                 >
                   <FontAwesomeIcon icon={faUserPlus} />
                   <span>New Order</span>
-                </button> */}
+                </button>
               </div>
             </div>
 
@@ -1400,7 +1381,7 @@ function Customer_OrderManagement() {
                         Cost
                       </div>
                     </th>
-
+                    
                     <th
                       scope="col"
                       className="px-6 py-3 text-left text-xs font-medium text-blue-500 dark:text-blue-400 uppercase tracking-wider"
@@ -1526,7 +1507,7 @@ function Customer_OrderManagement() {
                             >
                               <FontAwesomeIcon icon={faEdit} />
                             </button>
-                            {/* {order.status === "pending" && (
+                            {order.status === "pending" && (
                               <>
                                 <button
                                   onClick={() => confirmOrder(order.id)}
@@ -1543,8 +1524,8 @@ function Customer_OrderManagement() {
                                   <FontAwesomeIcon icon={faBan} />
                                 </button>
                               </>
-                            )} */}
-                            {/* {order.status === "confirmed" &&
+                            )}
+                            {order.status === "confirmed" &&
                               order.availability_status === "imported" && (
                                 <button
                                   onClick={() => exportOrder(order.id)}
@@ -1553,7 +1534,7 @@ function Customer_OrderManagement() {
                                 >
                                   <FontAwesomeIcon icon={faTruck} />
                                 </button>
-                              )} */}
+                              )}
                             <button
                               onClick={() => handleDelete(order.id)}
                               className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition"
@@ -1718,5 +1699,7 @@ function Customer_OrderManagement() {
     </ErrorBoundary>
   );
 }
+
+
 
 export default Customer_OrderManagement;

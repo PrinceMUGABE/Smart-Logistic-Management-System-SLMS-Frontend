@@ -67,7 +67,7 @@ const DriverHeader = () => {
         <div className="flex justify-between items-center h-20">
           {/* Logo and Brand */}
           <div className="flex items-center">
-            <Link to="/customer/vehicles" className="flex items-center">
+            <Link to="/driver/vehicles" className="flex items-center">
               <img src={Logo} alt="Logo" className="h-12 w-auto mr-2" />
               <span className="text-white font-bold text-xl hidden sm:block">Smart Logistic Management System</span>
             </Link>
@@ -143,7 +143,7 @@ const DriverHeader = () => {
               {dropdownOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-50">
                   <Link 
-                    to={`/customer/profile/${userId}`}
+                    to={`/driver/profile`}
                     className="block px-4 py-3 text-sm text-gray-700 hover:bg-gray-100 rounded-t-md"
                     onClick={() => setDropdownOpen(false)}
                   >

@@ -1,9 +1,9 @@
 /* eslint-disable no-unused-vars */
 // src/components/WarehouseCommodityManagement.js
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useParams, Link } from 'react-router-dom';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import { useParams, Link } from "react-router-dom";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEdit,
   faTrash,
@@ -14,8 +14,8 @@ import {
   faHistory,
   faArrowUp,
   faArrowDown,
-  faEquals
-} from '@fortawesome/free-solid-svg-icons';
+  faEquals,
+} from "@fortawesome/free-solid-svg-icons";
 
 const WarehouseCommodityManagement = () => {
   const { warehouseId } = useParams();
@@ -25,36 +25,37 @@ const WarehouseCommodityManagement = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentItem, setCurrentItem] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('');
+  const [message, setMessage] = useState("");
+  const [messageType, setMessageType] = useState("");
   const [inventoryModalOpen, setInventoryModalOpen] = useState(false);
-  const [inventoryAction, setInventoryAction] = useState('in');
-  const [quantity, setQuantity] = useState('');
-  const [notes, setNotes] = useState('');
-  const BASE_URL = 'http://127.0.0.1:8000/warehouse/';
-  const token = localStorage.getItem('token');
+  const [inventoryAction, setInventoryAction] = useState("in");
+  const [quantity, setQuantity] = useState("");
+  const [notes, setNotes] = useState("");
+  const BASE_URL = "http://127.0.0.1:8000/warehouse/";
+  const token = localStorage.getItem("token");
 
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [warehouseRes, commoditiesRes, allCommoditiesRes] = await Promise.all([
-        axios.get(`${BASE_URL}${warehouseId}/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${BASE_URL}warehouses/${warehouseId}/commodities/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-        axios.get(`${BASE_URL}commodities/`, {
-          headers: { Authorization: `Bearer ${token}` },
-        }),
-      ]);
+      const [warehouseRes, commoditiesRes, allCommoditiesRes] =
+        await Promise.all([
+          axios.get(`${BASE_URL}${warehouseId}/`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${BASE_URL}warehouses/${warehouseId}/commodities/`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+          axios.get(`${BASE_URL}commodities/`, {
+            headers: { Authorization: `Bearer ${token}` },
+          }),
+        ]);
       setWarehouse(warehouseRes.data);
       setCommodities(commoditiesRes.data);
       setAllCommodities(allCommoditiesRes.data);
     } catch (err) {
-      console.error('Error fetching data:', err);
-      setMessage('Failed to fetch data');
-      setMessageType('error');
+      console.error("Error fetching data:", err);
+      setMessage("Failed to fetch data");
+      setMessageType("error");
     } finally {
       setIsLoading(false);
     }
@@ -65,18 +66,26 @@ const WarehouseCommodityManagement = () => {
   }, [warehouseId]);
 
   const handleDelete = async (id) => {
-    if (!window.confirm('Are you sure you want to remove this commodity from the warehouse?')) return;
+    if (
+      !window.confirm(
+        "Are you sure you want to remove this commodity from the warehouse?"
+      )
+    )
+      return;
     try {
       setIsLoading(true);
-      await axios.delete(`${BASE_URL}warehouses/${warehouseId}/commodities/${id}/`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      await axios.delete(
+        `${BASE_URL}warehouses/${warehouseId}/commodities/${id}/`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
+      );
       await fetchData();
-      setMessage('Commodity removed successfully');
-      setMessageType('success');
+      setMessage("Commodity removed successfully");
+      setMessageType("success");
     } catch (err) {
-      setMessage(err.response?.data?.error || 'Failed to remove commodity');
-      setMessageType('error');
+      setMessage(err.response?.data?.error || "Failed to remove commodity");
+      setMessageType("error");
     } finally {
       setIsLoading(false);
     }
@@ -92,11 +101,11 @@ const WarehouseCommodityManagement = () => {
       );
       await fetchData();
       setIsModalOpen(false);
-      setMessage('Commodity added successfully');
-      setMessageType('success');
+      setMessage("Commodity added successfully");
+      setMessageType("success");
     } catch (err) {
-      setMessage(err.response?.data?.error || 'Failed to add commodity');
-      setMessageType('error');
+      setMessage(err.response?.data?.error || "Failed to add commodity");
+      setMessageType("error");
     } finally {
       setIsLoading(false);
     }
@@ -117,37 +126,43 @@ const WarehouseCommodityManagement = () => {
       );
       await fetchData();
       setInventoryModalOpen(false);
-      setQuantity('');
-      setNotes('');
-      setMessage('Inventory updated successfully');
-      setMessageType('success');
+      setQuantity("");
+      setNotes("");
+      setMessage("Inventory updated successfully");
+      setMessageType("success");
     } catch (err) {
-      setMessage(err.response?.data?.error || 'Failed to update inventory');
-      setMessageType('error');
+      setMessage(err.response?.data?.error || "Failed to update inventory");
+      setMessageType("error");
     } finally {
       setIsLoading(false);
     }
   };
 
   const getUtilizationColor = (percentage) => {
-    if (percentage > 90) return 'bg-red-500';
-    if (percentage > 70) return 'bg-yellow-500';
-    return 'bg-green-500';
+    if (percentage > 90) return "bg-red-500";
+    if (percentage > 70) return "bg-yellow-500";
+    return "bg-green-500";
   };
 
   const getActionIcon = (action) => {
     switch (action) {
-      case 'in': return faArrowUp;
-      case 'out': return faArrowDown;
-      default: return faEquals;
+      case "in":
+        return faArrowUp;
+      case "out":
+        return faArrowDown;
+      default:
+        return faEquals;
     }
   };
 
   const getActionColor = (action) => {
     switch (action) {
-      case 'in': return 'text-green-400';
-      case 'out': return 'text-red-400';
-      default: return 'text-blue-400';
+      case "in":
+        return "text-green-400";
+      case "out":
+        return "text-red-400";
+      default:
+        return "text-blue-400";
     }
   };
 
@@ -165,8 +180,11 @@ const WarehouseCommodityManagement = () => {
                 {warehouse.location}
               </p>
               <p className="text-gray-400 text-sm mt-1">
-                Status: <span className="text-white">{warehouse.status}</span> | 
-                Availability: <span className="text-white">{warehouse.availability_status}</span>
+                Status: <span className="text-white">{warehouse.status}</span> |
+                Availability:{" "}
+                <span className="text-white">
+                  {warehouse.availability_status}
+                </span>
               </p>
             </div>
           )}
@@ -175,9 +193,9 @@ const WarehouseCommodityManagement = () => {
         {message && (
           <div
             className={`text-center py-3 px-4 mb-6 rounded-lg shadow-md ${
-              messageType === 'success'
-                ? 'bg-green-900 text-green-100'
-                : 'bg-red-900 text-red-100'
+              messageType === "success"
+                ? "bg-green-900 text-green-100"
+                : "bg-red-900 text-red-100"
             }`}
           >
             {message}
@@ -220,7 +238,10 @@ const WarehouseCommodityManagement = () => {
             <tbody>
               {commodities.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="text-center py-8 text-gray-400 bg-gray-800">
+                  <td
+                    colSpan="7"
+                    className="text-center py-8 text-gray-400 bg-gray-800"
+                  >
                     <div className="flex flex-col items-center">
                       <FontAwesomeIcon
                         icon={faBox}
@@ -232,9 +253,10 @@ const WarehouseCommodityManagement = () => {
                 </tr>
               ) : (
                 commodities.map((item, index) => {
-                  const utilization = typeof item.get_capacity_utilization === 'function' 
-  ? item.get_capacity_utilization() 
-  : (item.current_quantity / item.max_capacity) * 100;
+                  const utilization =
+                    typeof item.get_capacity_utilization === "function"
+                      ? item.get_capacity_utilization()
+                      : (item.current_quantity / item.max_capacity) * 100;
                   return (
                     <tr
                       key={item.id}
@@ -257,7 +279,9 @@ const WarehouseCommodityManagement = () => {
                         <div className="flex items-center">
                           <div className="w-full bg-gray-700 rounded-full h-2.5 mr-2">
                             <div
-                              className={`h-2.5 rounded-full ${getUtilizationColor(utilization)}`}
+                              className={`h-2.5 rounded-full ${getUtilizationColor(
+                                utilization
+                              )}`}
                               style={{
                                 width: `${Math.min(100, utilization)}%`,
                               }}
@@ -271,7 +295,7 @@ const WarehouseCommodityManagement = () => {
                           <button
                             onClick={() => {
                               setCurrentItem(item);
-                              setInventoryAction('in');
+                              setInventoryAction("in");
                               setInventoryModalOpen(true);
                             }}
                             className="text-green-400 hover:text-green-300"
@@ -282,7 +306,7 @@ const WarehouseCommodityManagement = () => {
                           <button
                             onClick={() => {
                               setCurrentItem(item);
-                              setInventoryAction('out');
+                              setInventoryAction("out");
                               setInventoryModalOpen(true);
                             }}
                             className="text-red-400 hover:text-red-300"
@@ -297,13 +321,13 @@ const WarehouseCommodityManagement = () => {
                           >
                             <FontAwesomeIcon icon={faTrash} />
                           </button>
-                          <Link
+                          {/* <Link
                             to={`/warehouses/${warehouseId}/commodities/${item.id}/movements`}
                             className="text-blue-400 hover:text-blue-300"
                             title="View History"
                           >
                             <FontAwesomeIcon icon={faHistory} />
-                          </Link>
+                          </Link> */}
                         </div>
                       </td>
                     </tr>
@@ -318,20 +342,25 @@ const WarehouseCommodityManagement = () => {
       {/* Add Commodity Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black opacity-50" onClick={() => setIsModalOpen(false)}></div>
+          <div
+            className="fixed inset-0 bg-black opacity-50"
+            onClick={() => setIsModalOpen(false)}
+          ></div>
           <div className="bg-gray-900 rounded-lg shadow-xl p-6 z-50 w-96 border border-gray-800">
             <h2 className="text-xl font-bold mb-4 text-blue-500">
               Add Commodity to Warehouse
             </h2>
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              const formData = new FormData(e.target);
-              handleAddCommodity({
-                commodity_id: formData.get('commodity_id'),
-                max_capacity: formData.get('max_capacity'),
-                current_quantity: formData.get('current_quantity') || 0,
-              });
-            }}>
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const formData = new FormData(e.target);
+                handleAddCommodity({
+                  commodity_id: formData.get("commodity_id"),
+                  max_capacity: formData.get("max_capacity"),
+                  current_quantity: formData.get("current_quantity") || 0,
+                });
+              }}
+            >
               <div className="space-y-4">
                 <div>
                   <label className="block text-gray-300 mb-2">Commodity</label>
@@ -356,7 +385,9 @@ const WarehouseCommodityManagement = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-gray-300 mb-2">Max Capacity</label>
+                  <label className="block text-gray-300 mb-2">
+                    Max Capacity
+                  </label>
                   <input
                     type="number"
                     name="max_capacity"
@@ -367,7 +398,9 @@ const WarehouseCommodityManagement = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-300 mb-2">Initial Quantity (optional)</label>
+                  <label className="block text-gray-300 mb-2">
+                    Initial Quantity (optional)
+                  </label>
                   <input
                     type="number"
                     name="current_quantity"
@@ -393,9 +426,25 @@ const WarehouseCommodityManagement = () => {
                   disabled={isLoading}
                 >
                   {isLoading && (
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                   )}
                   Add Commodity
@@ -409,25 +458,36 @@ const WarehouseCommodityManagement = () => {
       {/* Inventory Action Modal */}
       {inventoryModalOpen && currentItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
-          <div className="fixed inset-0 bg-black opacity-50" onClick={() => setInventoryModalOpen(false)}></div>
+          <div
+            className="fixed inset-0 bg-black opacity-50"
+            onClick={() => setInventoryModalOpen(false)}
+          ></div>
           <div className="bg-gray-900 rounded-lg shadow-xl p-6 z-50 w-96 border border-gray-800">
             <h2 className="text-xl font-bold mb-4 text-blue-500 flex items-center">
-              <FontAwesomeIcon 
-                icon={getActionIcon(inventoryAction)} 
-                className={`mr-2 ${getActionColor(inventoryAction)}`} 
+              <FontAwesomeIcon
+                icon={getActionIcon(inventoryAction)}
+                className={`mr-2 ${getActionColor(inventoryAction)}`}
               />
-              {inventoryAction === 'in' ? 'Stock In' : 'Stock Out'}
+              {inventoryAction === "in" ? "Stock In" : "Stock Out"}
             </h2>
             <div className="mb-4">
               <p className="text-gray-300">
-                Commodity: <span className="text-white">{currentItem.commodity_name}</span>
+                Commodity:{" "}
+                <span className="text-white">{currentItem.commodity_name}</span>
               </p>
               <p className="text-gray-300">
-                Current Quantity: <span className="text-white">{currentItem.current_quantity} {currentItem.commodity_unit}</span>
+                Current Quantity:{" "}
+                <span className="text-white">
+                  {currentItem.current_quantity} {currentItem.commodity_unit}
+                </span>
               </p>
-              {inventoryAction === 'in' && (
+              {inventoryAction === "in" && (
                 <p className="text-gray-300">
-                  Available Capacity: <span className="text-white">{currentItem.max_capacity - currentItem.current_quantity} {currentItem.commodity_unit}</span>
+                  Available Capacity:{" "}
+                  <span className="text-white">
+                    {currentItem.max_capacity - currentItem.current_quantity}{" "}
+                    {currentItem.commodity_unit}
+                  </span>
                 </p>
               )}
             </div>
@@ -461,8 +521,8 @@ const WarehouseCommodityManagement = () => {
                 type="button"
                 onClick={() => {
                   setInventoryModalOpen(false);
-                  setQuantity('');
-                  setNotes('');
+                  setQuantity("");
+                  setNotes("");
                 }}
                 className="px-4 py-2 bg-gray-700 text-white rounded hover:bg-gray-600"
                 disabled={isLoading}
@@ -476,9 +536,25 @@ const WarehouseCommodityManagement = () => {
                 disabled={isLoading || !quantity}
               >
                 {isLoading && (
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  <svg
+                    className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
                   </svg>
                 )}
                 Confirm

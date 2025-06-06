@@ -576,20 +576,20 @@ const CategoryManagement = () => {
                           >
                             <FontAwesomeIcon icon={faEdit} />
                           </button>
-                          {/* <button
+                          <button
                             onClick={() => handleDelete(category.id)}
                             className="text-red-600 hover:text-red-900"
                             title="Delete"
                           >
                             <FontAwesomeIcon icon={faTrash} />
-                          </button> */}
-                          <Link
+                          </button>
+                          {/* <Link
                             to={`/categories/${category.id}/commodities`}
                             className="text-green-600 hover:text-green-900"
                             title="View Commodities"
                           >
                             <FontAwesomeIcon icon={faBoxes} />
-                          </Link>
+                          </Link> */}
                         </div>
                       </td>
                     </tr>

@@ -74,6 +74,7 @@ import Dispatcher_CreateUser from "./components/pages/dispatcher/CreateNewUser.j
 import Dispatcher_ManageUsers from "./components/pages/dispatcher/Users.jsx";
 import Customer_OrderManagement from "./components/pages/customer/manage_orders.jsx";
 import Customer_Manage_Deliveries from "./components/pages/customer/manage_deliveries.jsx";
+import Driver_Manage_Deliveries from "./components/pages/driver/manage_deliveries.jsx";
 
 
 
@@ -196,7 +197,7 @@ const App = () => {
             <Route path="/driver/profile" element={<DriverProfile />} />
 
             <Route path="/driver/orders" element={<Customer_OrderManagement />} />
-            <Route path="/driver/deliveries" element={<Customer_Manage_Deliveries />} />
+            <Route path="/driver/deliveries" element={<Driver_Manage_Deliveries />} />
 
             <Route path="/driver/relocations" element={<Driver_Manage_Relocations />} />
      
