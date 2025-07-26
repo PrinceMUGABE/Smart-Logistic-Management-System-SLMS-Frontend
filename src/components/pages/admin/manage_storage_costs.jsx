@@ -746,7 +746,7 @@ return (
                   <label className="form-label fw-semibold">Country</label>
                   <input
                     type="text"
-                    className="form-control bg-gray-700 text-white border-gray-600 focus:border-blue-500"
+                    className="form-control bg-white text-gray-700 border-gray-600 focus:border-blue-500"
                     placeholder="Filter by country"
                     value={activeFilters.country}
                     onChange={(e) =>
@@ -796,7 +796,7 @@ return (
                         <div className="d-flex gap-2">
                           <input
                             type="date"
-                            className="form-control bg-gray-700 text-white border-gray-600"
+                            className="form-control bg-white text-gray-700 border-gray-600"
                             value={dateRange.start}
                             onChange={(e) =>
                               setDateRange({
@@ -808,7 +808,7 @@ return (
                           <span className="align-self-center text-gray-400">to</span>
                           <input
                             type="date"
-                            className="form-control bg-gray-700 text-white border-gray-600"
+                            className="form-control bg-white text-gray-700 border-gray-600"
                             value={dateRange.end}
                             onChange={(e) =>
                               setDateRange({
@@ -824,7 +824,7 @@ return (
                         <div className="d-flex gap-2">
                           <input
                             type="number"
-                            className="form-control bg-gray-700 text-white border-gray-600"
+                            className="form-control bg-white text-gray-700 border-gray-600"
                             placeholder="Min"
                             value={priceRange.min}
                             onChange={(e) =>
@@ -837,7 +837,7 @@ return (
                           <span className="align-self-center text-gray-400">to</span>
                           <input
                             type="number"
-                            className="form-control bg-gray-700 text-white border-gray-600"
+                            className="form-control bg-white text-gray-700 border-gray-600"
                             placeholder="Max"
                             value={priceRange.max}
                             onChange={(e) =>
@@ -1026,7 +1026,7 @@ return (
                 <label className="form-label fw-semibold">Country</label>
                 <input
                   type="text"
-                  className="form-control bg-gray-700 text-white border-gray-600"
+                  className="form-control bg-white text-gray-700 border-gray-600"
                   name="country"
                   value={currentCost.country}
                   onChange={(e) =>
@@ -1042,7 +1042,7 @@ return (
                 <label className="form-label fw-semibold">Price Per Unit</label>
                 <input
                   type="number"
-                  className="form-control bg-gray-700 text-white border-gray-600"
+                  className="form-control bg-white text-gray-700 border-gray-600"
                   name="price_per_unit"
                   value={currentCost.price_per_unit}
                   onChange={(e) =>
@@ -1059,7 +1059,7 @@ return (
               <div className="col-md-3">
                 <label className="form-label fw-semibold">Currency</label>
                 <select
-                  className="form-select bg-gray-700 text-white border-gray-600"
+                  className="form-select bg-white text-gray-700 border-gray-600"
                   name="currency"
                   value={currentCost.currency}
                   onChange={(e) =>
@@ -1082,7 +1082,7 @@ return (
               <div className="col-md-4">
                 <label className="form-label fw-semibold">Warehouse</label>
                 <select
-                  className="form-select bg-gray-700 text-white border-gray-600"
+                  className="form-select bg-white text-gray-700 border-gray-600"
                   name="warehouse"
                   value={currentCost.warehouse}
                   onChange={(e) => {
@@ -1119,7 +1119,7 @@ return (
               <div className="col-md-4">
                 <label className="form-label fw-semibold">Category</label>
                 <select
-                  className="form-select bg-gray-700 text-white border-gray-600"
+                  className="form-select bg-white text-gray-700 border-gray-600"
                   name="category"
                   value={currentCost.category}
                   onChange={(e) => {
@@ -1156,7 +1156,7 @@ return (
               <div className="col-md-4">
                 <label className="form-label fw-semibold">Commodity</label>
                 <select
-                  className="form-select bg-gray-700 text-white border-gray-600"
+                  className="form-select bg-white text-gray-700 border-gray-600"
                   name="commodity"
                   value={currentCost.commodity}
                   onChange={(e) =>
