@@ -42,6 +42,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import Logo from "../../../assets/pictures/logo.png";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -155,31 +156,243 @@ function Dispatcher_Manage_Vehicles() {
   const handleDownload = {
     PDF: () => {
       const doc = new jsPDF();
-      doc.autoTable({ html: "#vehicle-table" });
-      doc.save("vehicles.pdf");
+      
+      // Add logo (you'll need to convert your logo to base64 or use a URL)
+      doc.addImage(Logo, 'PNG', 20, 15, 30, 30);
+      
+      // Company Header
+      doc.setFontSize(20);
+      doc.setTextColor(59, 130, 246); // Blue color
+      doc.text('SMART LOGISTIC', 60, 25);
+      doc.setFontSize(12);
+      // doc.text('(DEP)', 60, 32);
+      
+      // Contact Information
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Email: depprotection01@gmail.com', 60, 40);
+      doc.text('Phone: +243 993 861 047 | +243 833 210 038', 60, 45);
+      
+      // Add line separator
+      doc.line(20, 55, 190, 55);
+      
+      // Report Title
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text('VEHICLE MANAGEMENT REPORT', 20, 70);
+      
+      // Report Period and Filter Information
+      doc.setFontSize(10);
+      const currentDate = new Date().toLocaleDateString();
+      doc.text(`Report Generated: ${currentDate}`, 20, 80);
+      doc.text(`Total Records: ${filteredAndSortedData.length}`, 20, 85);
+      
+      // Add filter information if any filters are active
+      let yPosition = 90;
+      const hasActiveFilters = Object.values(activeFilters).flat().length > 0 || searchQuery;
+      
+      if (hasActiveFilters) {
+        doc.text('Active Filters:', 20, yPosition);
+        yPosition += 5;
+        
+        if (searchQuery) {
+          doc.text(`• Search: "${searchQuery}"`, 25, yPosition);
+          yPosition += 5;
+        }
+        if (activeFilters.type.length > 0) {
+          doc.text(`• Vehicle Types: ${activeFilters.type.join(', ')}`, 25, yPosition);
+          yPosition += 5;
+        }
+        if (activeFilters.relocationSize.length > 0) {
+          doc.text(`• Relocation Sizes: ${activeFilters.relocationSize.join(', ')}`, 25, yPosition);
+          yPosition += 5;
+        }
+        if (activeFilters.drivingCategory.length > 0) {
+          doc.text(`• Driving Categories: ${activeFilters.drivingCategory.join(', ')}`, 25, yPosition);
+          yPosition += 5;
+        }
+        if (activeFilters.status.length > 0) {
+          doc.text(`• Status: ${activeFilters.status.map(s => s === 'active' ? 'Active' : 'Not Active').join(', ')}`, 25, yPosition);
+          yPosition += 5;
+        }
+      }
+      
+      // Summary Statistics
+      yPosition += 10;
+      doc.setFontSize(12);
+      doc.text('SUMMARY STATISTICS', 20, yPosition);
+      yPosition += 10;
+      
+      const stats = getSummaryStats();
+      const statusStats = getStatusStats();
+      
+      doc.setFontSize(10);
+      doc.text(`Total Vehicles: ${stats.totalVehicles}`, 20, yPosition);
+      doc.text(`Vehicle Types: ${stats.uniqueTypes}`, 70, yPosition);
+      doc.text(`Active: ${statusStats.active}`, 140, yPosition);
+      yPosition += 5;
+      doc.text(`Most Common Type: ${stats.mostCommonType}`, 20, yPosition);
+      doc.text(`Inactive: ${statusStats.inactive}`, 70, yPosition);
+      
+      // Table data
+      const tableData = filteredAndSortedData.map((vehicle, index) => [
+        index + 1,
+        vehicle.type || 'N/A',
+        vehicle.relocation_size || 'N/A',
+        vehicle.vehicle_model || 'N/A',
+        vehicle.plate_number || 'N/A',
+        vehicle.driving_category || 'N/A',
+        vehicle.status === 'active' ? 'Active' : 'Not Active',
+        new Date(vehicle.created_date).toLocaleDateString()
+      ]);
+      
+      // Add table
+      doc.autoTable({
+        startY: yPosition + 15,
+        head: [['#', 'Type', 'Size', 'Model', 'Plate', 'Category', 'Status', 'Created']],
+        body: tableData,
+        styles: { 
+          fontSize: 8,
+          cellPadding: 2
+        },
+        headStyles: { 
+          fillColor: [59, 130, 246],
+          textColor: [255, 255, 255],
+          fontSize: 9
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { left: 20, right: 20 },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 20 },
+          2: { cellWidth: 15 },
+          3: { cellWidth: 25 },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 15 },
+          6: { cellWidth: 18 },
+          7: { cellWidth: 22 }
+        }
+      });
+      
+      // Footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(128, 128, 128);
+        doc.text(`Page ${i} of ${pageCount}`, 20, doc.internal.pageSize.height - 10);
+        doc.text(`Generated on ${currentDate}`, doc.internal.pageSize.width - 60, doc.internal.pageSize.height - 10);
+      }
+      
+      doc.save(`vehicle-report-${currentDate.replace(/\//g, '-')}.pdf`);
     },
+    
     Excel: () => {
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(
-        workbook,
-        XLSX.utils.json_to_sheet(vehicleData),
-        "Vehicles"
-      );
-      XLSX.writeFile(workbook, "vehicles.xlsx");
+      
+      // Create summary sheet
+      const stats = getSummaryStats();
+      const statusStats = getStatusStats();
+      
+      const summaryData = [
+        ['VEHICLE MANAGEMENT REPORT'],
+        [''],
+        ['Company:', 'SMART LOGISTIC'],
+        ['Email:', 'smartlogistic01@gmail.com'],
+        ['Phone:', '+243 993 861 047 | +243 833 210 038'],
+        [''],
+        ['Report Generated:', new Date().toLocaleDateString()],
+        ['Total Records:', filteredAndSortedData.length],
+        [''],
+        ['SUMMARY STATISTICS'],
+        ['Total Vehicles:', stats.totalVehicles],
+        ['Vehicle Types:', stats.uniqueTypes],
+        ['Most Common Type:', stats.mostCommonType],
+        ['Active Vehicles:', statusStats.active],
+        ['Inactive Vehicles:', statusStats.inactive],
+        [''],
+        ['ACTIVE FILTERS'],
+      ];
+      
+      // Add filter information
+      if (searchQuery) summaryData.push(['Search Query:', searchQuery]);
+      if (activeFilters.type.length > 0) summaryData.push(['Vehicle Types:', activeFilters.type.join(', ')]);
+      if (activeFilters.relocationSize.length > 0) summaryData.push(['Relocation Sizes:', activeFilters.relocationSize.join(', ')]);
+      if (activeFilters.drivingCategory.length > 0) summaryData.push(['Driving Categories:', activeFilters.drivingCategory.join(', ')]);
+      if (activeFilters.status.length > 0) summaryData.push(['Status:', activeFilters.status.map(s => s === 'active' ? 'Active' : 'Not Active').join(', ')]);
+      
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
+      
+      // Create main data sheet with filtered data
+      const vehicleExportData = filteredAndSortedData.map((vehicle, index) => ({
+        'Serial No.': index + 1,
+        'Vehicle Type': vehicle.type || 'N/A',
+        'Relocation Size': vehicle.relocation_size || 'N/A',
+        'Vehicle Model': vehicle.vehicle_model || 'N/A',
+        'Plate Number': vehicle.plate_number || 'N/A',
+        'Driving Category': vehicle.driving_category || 'N/A',
+        'Status': vehicle.status === 'active' ? 'Active' : 'Not Active',
+        'Created Date': new Date(vehicle.created_date).toLocaleDateString()
+      }));
+      
+      const dataSheet = XLSX.utils.json_to_sheet(vehicleExportData);
+      XLSX.utils.book_append_sheet(workbook, dataSheet, "Vehicle Data");
+      
+      const fileName = `vehicle-report-${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
     },
+    
     CSV: () => {
-      const csvContent =
-        "data:text/csv;charset=utf-8," +
-        Object.keys(vehicleData[0]).join(",") +
-        "\n" +
-        vehicleData.map((row) => Object.values(row).join(",")).join("\n");
+      // Create header with company information
+      const stats = getSummaryStats();
+      const statusStats = getStatusStats();
+      
+      const header = [
+        'SMART LOGISTIC - VEHICLE REPORT',
+        `Report Generated: ${new Date().toLocaleDateString()}`,
+        `Total Records: ${filteredAndSortedData.length}`,
+        '',
+        'SUMMARY STATISTICS',
+        `Total Vehicles: ${stats.totalVehicles}, Vehicle Types: ${stats.uniqueTypes}, Active: ${statusStats.active}, Inactive: ${statusStats.inactive}`,
+        `Most Common Type: ${stats.mostCommonType}`,
+        ''
+      ];
+      
+      // Add filter information if active
+      const hasActiveFilters = Object.values(activeFilters).flat().length > 0 || searchQuery;
+      if (hasActiveFilters) {
+        header.push('ACTIVE FILTERS');
+        if (searchQuery) header.push(`Search: ${searchQuery}`);
+        if (activeFilters.type.length > 0) header.push(`Vehicle Types: ${activeFilters.type.join(', ')}`);
+        if (activeFilters.relocationSize.length > 0) header.push(`Relocation Sizes: ${activeFilters.relocationSize.join(', ')}`);
+        if (activeFilters.drivingCategory.length > 0) header.push(`Driving Categories: ${activeFilters.drivingCategory.join(', ')}`);
+        if (activeFilters.status.length > 0) header.push(`Status: ${activeFilters.status.map(s => s === 'active' ? 'Active' : 'Not Active').join(', ')}`);
+        header.push('');
+      }
+      
+      // Add table headers
+      header.push('VEHICLE DATA');
+      header.push('Serial No.,Vehicle Type,Relocation Size,Vehicle Model,Plate Number,Driving Category,Status,Created Date');
+      
+      // Add data rows
+      const dataRows = filteredAndSortedData.map((vehicle, index) => 
+        `${index + 1},"${vehicle.type || 'N/A'}","${vehicle.relocation_size || 'N/A'}","${vehicle.vehicle_model || 'N/A'}","${vehicle.plate_number || 'N/A'}","${vehicle.driving_category || 'N/A'}","${vehicle.status === 'active' ? 'Active' : 'Not Active'}","${new Date(vehicle.created_date).toLocaleDateString()}"`
+      );
+      
+      const csvContent = "data:text/csv;charset=utf-8," + 
+        header.join("\n") + "\n" + 
+        dataRows.join("\n");
+      
       const link = document.createElement("a");
       link.setAttribute("href", encodeURI(csvContent));
-      link.setAttribute("download", "vehicles.csv");
+      link.setAttribute("download", `vehicle-report-${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-    },
+    }
   };
 
   const handleAddUpdateVehicle = async (e) => {

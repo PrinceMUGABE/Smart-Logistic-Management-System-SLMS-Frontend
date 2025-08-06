@@ -460,7 +460,6 @@ function Admin_Manage_Deliveries() {
     }
   };
 
-  // Replace the existing handleDownload object with this modified version
 const handleDownload = {
   PDF: () => {
     const doc = new jsPDF();

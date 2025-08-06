@@ -189,9 +189,7 @@ function Admin_Manage_Feedbacks() {
     }
   };
 
-  // Replace the existing handleDownload object with this enhanced version
-
-const handleDownload = {
+ const handleDownload = {
   PDF: () => {
     const doc = new jsPDF();
     

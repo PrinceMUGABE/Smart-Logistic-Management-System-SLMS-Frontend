@@ -47,6 +47,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import Logo from "../../../assets/pictures/logo.png";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -829,31 +830,290 @@ function Dispatcher_Manage_Drivers() {
   const handleDownload = {
     PDF: () => {
       const doc = new jsPDF();
-      doc.autoTable({ html: "#driver-table" });
-      doc.save("drivers.pdf");
+      
+      // Add logo (you'll need to convert your logo to base64 or use a URL)
+      doc.addImage(Logo, 'PNG', 20, 15, 30, 30);
+      
+      // Company Header
+      doc.setFontSize(20);
+      doc.setTextColor(59, 130, 246); // Blue color
+      doc.text('SMART LOGISTIC', 60, 25);
+      doc.setFontSize(12);
+      // doc.text('(DEP)', 60, 32);
+      
+      // Contact Information
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.text('Email: smartlogistic01@gmail.com', 60, 40);
+      doc.text('Phone: +243 993 861 047 | +243 833 210 038', 60, 45);
+      
+      // Add line separator
+      doc.line(20, 55, 190, 55);
+      
+      // Report Title
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text('DRIVER MANAGEMENT REPORT', 20, 70);
+      
+      // Report Period and Filter Information
+      doc.setFontSize(10);
+      const currentDate = new Date().toLocaleDateString();
+      doc.text(`Report Generated: ${currentDate}`, 20, 80);
+      doc.text(`Total Records: ${filteredAndSortedDrivers.length}`, 20, 85);
+      
+      // Add filter information if any filters are active
+      let yPosition = 90;
+      const hasActiveFilters = Object.values(filters).some(filter => {
+        if (Array.isArray(filter)) return filter.length > 0;
+        if (typeof filter === 'object') return Object.values(filter).some(v => v);
+        return filter;
+      }) || searchQuery;
+      
+      if (hasActiveFilters) {
+        doc.text('Active Filters:', 20, yPosition);
+        yPosition += 5;
+        
+        if (searchQuery) {
+          doc.text(`• Search: "${searchQuery}"`, 25, yPosition);
+          yPosition += 5;
+        }
+        if (filters.status) {
+          doc.text(`• Status: ${filters.status.charAt(0).toUpperCase() + filters.status.slice(1)}`, 25, yPosition);
+          yPosition += 5;
+        }
+        if (filters.availability) {
+          doc.text(`• Availability: ${filters.availability.charAt(0).toUpperCase() + filters.availability.slice(1)}`, 25, yPosition);
+          yPosition += 5;
+        }
+        if (filters.gender) {
+          doc.text(`• Gender: ${filters.gender.charAt(0).toUpperCase() + filters.gender.slice(1)}`, 25, yPosition);
+          yPosition += 5;
+        }
+        if (filters.drivingCategories.length > 0) {
+          doc.text(`• Driving Categories: ${filters.drivingCategories.join(', ')}`, 25, yPosition);
+          yPosition += 5;
+        }
+      }
+      
+      // Summary Statistics
+      yPosition += 10;
+      doc.setFontSize(12);
+      doc.text('SUMMARY STATISTICS', 20, yPosition);
+      yPosition += 10;
+      
+      const totalDrivers = driversData.length;
+      const approvedDrivers = driversData.filter(d => d.status === 'approved').length;
+      const activeDrivers = driversData.filter(d => d.availability_status === 'active').length;
+      const rejectedDrivers = driversData.filter(d => d.status === 'rejected').length;
+      const inactiveDrivers = driversData.filter(d => d.availability_status === 'inactive').length;
+      
+      doc.setFontSize(10);
+      doc.text(`Total Drivers: ${totalDrivers}`, 20, yPosition);
+      doc.text(`Approved: ${approvedDrivers}`, 70, yPosition);
+      doc.text(`Active: ${activeDrivers}`, 120, yPosition);
+      yPosition += 5;
+      doc.text(`Rejected: ${rejectedDrivers}`, 20, yPosition);
+      doc.text(`Inactive: ${inactiveDrivers}`, 70, yPosition);
+      
+      // Most common driving categories
+      const categoryStats = driversData.reduce((acc, driver) => {
+        driver.driving_categories.forEach(category => {
+          acc[category] = (acc[category] || 0) + 1;
+        });
+        return acc;
+      }, {});
+      const mostCommonCategory = Object.entries(categoryStats).sort((a, b) => b[1] - a[1])[0];
+      if (mostCommonCategory) {
+        doc.text(`Most Common Category: ${mostCommonCategory[0]} (${mostCommonCategory[1]} drivers)`, 120, yPosition);
+      }
+      
+      // Table data
+      const tableData = filteredAndSortedDrivers.map((driver, index) => [
+        index + 1,
+        `${driver.first_name} ${driver.last_name}`,
+        driver.phone_number || 'N/A',
+        driver.email || 'N/A',
+        driver.driving_categories.join(', '),
+        driver.status.charAt(0).toUpperCase() + driver.status.slice(1),
+        driver.availability_status.charAt(0).toUpperCase() + driver.availability_status.slice(1),
+        driver.gender.charAt(0).toUpperCase() + driver.gender.slice(1)
+      ]);
+      
+      // Add table
+      doc.autoTable({
+        startY: yPosition + 15,
+        head: [['#', 'Name', 'Phone', 'Email', 'Categories', 'Status', 'Availability', 'Gender']],
+        body: tableData,
+        styles: { 
+          fontSize: 8,
+          cellPadding: 2
+        },
+        headStyles: { 
+          fillColor: [59, 130, 246],
+          textColor: [255, 255, 255],
+          fontSize: 9
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252]
+        },
+        margin: { left: 20, right: 20 },
+        columnStyles: {
+          0: { cellWidth: 10 },
+          1: { cellWidth: 25 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 30 },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 18 },
+          6: { cellWidth: 18 },
+          7: { cellWidth: 15 }
+        }
+      });
+      
+      // Footer
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setTextColor(128, 128, 128);
+        doc.text(`Page ${i} of ${pageCount}`, 20, doc.internal.pageSize.height - 10);
+        doc.text(`Generated on ${currentDate}`, doc.internal.pageSize.width - 60, doc.internal.pageSize.height - 10);
+      }
+      
+      doc.save(`driver-report-${currentDate.replace(/\//g, '-')}.pdf`);
     },
+    
     Excel: () => {
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(
-        workbook,
-        XLSX.utils.json_to_sheet(driversData),
-        "Drivers"
-      );
-      XLSX.writeFile(workbook, "drivers.xlsx");
+      
+      // Create summary sheet
+      const totalDrivers = driversData.length;
+      const approvedDrivers = driversData.filter(d => d.status === 'approved').length;
+      const activeDrivers = driversData.filter(d => d.availability_status === 'active').length;
+      const rejectedDrivers = driversData.filter(d => d.status === 'rejected').length;
+      const inactiveDrivers = driversData.filter(d => d.availability_status === 'inactive').length;
+      
+      // Category statistics
+      const categoryStats = driversData.reduce((acc, driver) => {
+        driver.driving_categories.forEach(category => {
+          acc[category] = (acc[category] || 0) + 1;
+        });
+        return acc;
+      }, {});
+      const mostCommonCategory = Object.entries(categoryStats).sort((a, b) => b[1] - a[1])[0];
+      
+      const summaryData = [
+        ['DRIVER MANAGEMENT REPORT'],
+        [''],
+        ['Company:', 'SMART LOGISTIC'],
+        ['Email:', 'smartlogistic01@gmail.com'],
+        ['Phone:', '+243 993 861 047 | +243 833 210 038'],
+        [''],
+        ['Report Generated:', new Date().toLocaleDateString()],
+        ['Total Records:', filteredAndSortedDrivers.length],
+        [''],
+        ['SUMMARY STATISTICS'],
+        ['Total Drivers:', totalDrivers],
+        ['Approved Drivers:', approvedDrivers],
+        ['Rejected Drivers:', rejectedDrivers],
+        ['Active Drivers:', activeDrivers],
+        ['Inactive Drivers:', inactiveDrivers],
+        ['Most Common Category:', mostCommonCategory ? `${mostCommonCategory[0]} (${mostCommonCategory[1]} drivers)` : 'N/A'],
+        [''],
+        ['DRIVING CATEGORIES BREAKDOWN'],
+        ...Object.entries(categoryStats).map(([category, count]) => [`Category ${category}:`, count]),
+        [''],
+        ['ACTIVE FILTERS'],
+      ];
+      
+      // Add filter information
+      if (searchQuery) summaryData.push(['Search Query:', searchQuery]);
+      if (filters.status) summaryData.push(['Status Filter:', filters.status.charAt(0).toUpperCase() + filters.status.slice(1)]);
+      if (filters.availability) summaryData.push(['Availability Filter:', filters.availability.charAt(0).toUpperCase() + filters.availability.slice(1)]);
+      if (filters.gender) summaryData.push(['Gender Filter:', filters.gender.charAt(0).toUpperCase() + filters.gender.slice(1)]);
+      if (filters.drivingCategories.length > 0) summaryData.push(['Driving Categories:', filters.drivingCategories.join(', ')]);
+      
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
+      
+      // Create main data sheet with filtered data
+      const driverExportData = filteredAndSortedDrivers.map((driver, index) => ({
+        'Serial No.': index + 1,
+        'First Name': driver.first_name || 'N/A',
+        'Last Name': driver.last_name || 'N/A',
+        'Full Name': `${driver.first_name} ${driver.last_name}`,
+        'Phone Number': driver.phone_number || 'N/A',
+        'Email': driver.email || 'N/A',
+        'Gender': driver.gender ? driver.gender.charAt(0).toUpperCase() + driver.gender.slice(1) : 'N/A',
+        'Driving Categories': driver.driving_categories.join(', '),
+        'Status': driver.status ? driver.status.charAt(0).toUpperCase() + driver.status.slice(1) : 'N/A',
+        'Availability Status': driver.availability_status ? driver.availability_status.charAt(0).toUpperCase() + driver.availability_status.slice(1) : 'N/A',
+        'National ID': driver.national_id_number || 'N/A',
+        'License Number': driver.driving_license_number || 'N/A'
+      }));
+      
+      const dataSheet = XLSX.utils.json_to_sheet(driverExportData);
+      XLSX.utils.book_append_sheet(workbook, dataSheet, "Driver Data");
+      
+      const fileName = `driver-report-${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`;
+      XLSX.writeFile(workbook, fileName);
     },
+    
     CSV: () => {
-      const csvContent =
-        "data:text/csv;charset=utf-8," +
-        Object.keys(driversData[0]).join(",") +
-        "\n" +
-        driversData.map((row) => Object.values(row).join(",")).join("\n");
+      // Create header with company information
+      const totalDrivers = driversData.length;
+      const approvedDrivers = driversData.filter(d => d.status === 'approved').length;
+      const activeDrivers = driversData.filter(d => d.availability_status === 'active').length;
+      const rejectedDrivers = driversData.filter(d => d.status === 'rejected').length;
+      const inactiveDrivers = driversData.filter(d => d.availability_status === 'inactive').length;
+      
+      const header = [
+        'SMART LOGISTIC - DRIVER REPORT',
+        `Report Generated: ${new Date().toLocaleDateString()}`,
+        `Total Records: ${filteredAndSortedDrivers.length}`,
+        '',
+        'SUMMARY STATISTICS',
+        `Total Drivers: ${totalDrivers}, Approved: ${approvedDrivers}, Rejected: ${rejectedDrivers}`,
+        `Active: ${activeDrivers}, Inactive: ${inactiveDrivers}`,
+        ''
+      ];
+      
+      // Add filter information if active
+      const hasActiveFilters = Object.values(filters).some(filter => {
+        if (Array.isArray(filter)) return filter.length > 0;
+        if (typeof filter === 'object') return Object.values(filter).some(v => v);
+        return filter;
+      }) || searchQuery;
+      
+      if (hasActiveFilters) {
+        header.push('ACTIVE FILTERS');
+        if (searchQuery) header.push(`Search: ${searchQuery}`);
+        if (filters.status) header.push(`Status: ${filters.status.charAt(0).toUpperCase() + filters.status.slice(1)}`);
+        if (filters.availability) header.push(`Availability: ${filters.availability.charAt(0).toUpperCase() + filters.availability.slice(1)}`);
+        if (filters.gender) header.push(`Gender: ${filters.gender.charAt(0).toUpperCase() + filters.gender.slice(1)}`);
+        if (filters.drivingCategories.length > 0) header.push(`Driving Categories: ${filters.drivingCategories.join(', ')}`);
+        header.push('');
+      }
+      
+      // Add table headers
+      header.push('DRIVER DATA');
+      header.push('Serial No.,First Name,Last Name,Phone Number,Email,Gender,Driving Categories,Status,Availability Status,National ID,License Number');
+      
+      // Add data rows
+      const dataRows = filteredAndSortedDrivers.map((driver, index) => 
+        `${index + 1},"${driver.first_name || 'N/A'}","${driver.last_name || 'N/A'}","${driver.phone_number || 'N/A'}","${driver.email || 'N/A'}","${driver.gender ? driver.gender.charAt(0).toUpperCase() + driver.gender.slice(1) : 'N/A'}","${driver.driving_categories.join(', ')}","${driver.status ? driver.status.charAt(0).toUpperCase() + driver.status.slice(1) : 'N/A'}","${driver.availability_status ? driver.availability_status.charAt(0).toUpperCase() + driver.availability_status.slice(1) : 'N/A'}","${driver.national_id_number || 'N/A'}","${driver.driving_license_number || 'N/A'}"`
+      );
+      
+      const csvContent = "data:text/csv;charset=utf-8," + 
+        header.join("\n") + "\n" + 
+        dataRows.join("\n");
+      
       const link = document.createElement("a");
       link.setAttribute("href", encodeURI(csvContent));
-      link.setAttribute("download", "drivers.csv");
+      link.setAttribute("download", `driver-report-${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
       document.body.appendChild(link);
       link.click();
       link.remove();
-    },
+    }
   };
 
   const handleDriverSubmit = async (e) => {

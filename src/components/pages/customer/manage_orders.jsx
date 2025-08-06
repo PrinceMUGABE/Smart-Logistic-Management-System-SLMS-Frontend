@@ -44,6 +44,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import Logo from "../../../assets/pictures/logo.png";
 
 // ErrorBoundary component remains the same
 class ErrorBoundary extends React.Component {
@@ -435,69 +436,240 @@ function Customer_OrderManagement() {
   };
 
   const handleDownload = {
-    PDF: () => {
-      const doc = new jsPDF();
-      doc.text("Order Management Report", 15, 15);
-      doc.autoTable({
-        html: "#order-table",
-        startY: 20,
-        styles: { fontSize: 8 },
-        headStyles: { fillColor: [41, 128, 185] },
-      });
-      doc.save("orders_report.pdf");
-    },
-    Excel: () => {
-      const worksheet = XLSX.utils.json_to_sheet(
-        filteredSortedData.map((order) => ({
-          ID: order.id,
-          Origin: order.origin,
-          Cost: order.cost_charged,
-          Status: order.status,
-          Warehouse: order.warehouse?.location || "N/A",
-          Commodity: order.commodity?.name || "N/A",
-          Quantity: order.quantity,
-          Created: new Date(order.created_at).toLocaleDateString(),
-        }))
-      );
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Orders");
-      XLSX.writeFile(workbook, "orders_report.xlsx");
-    },
-    CSV: () => {
-      const csvData = [
-        [
-          "ID",
-          "Origin",
-          "Cost",
-          "Status",
-          "Warehouse",
-          "Commodity",
-          "Quantity",
-          "Created",
-        ],
-        ...filteredSortedData.map((order) => [
-          order.id,
-          order.origin,
-          order.cost_charged,
-          order.status,
-          order.warehouse?.location || "N/A",
-          order.commodity?.name || "N/A",
-          order.quantity,
-          new Date(order.created_at).toLocaleDateString(),
-        ]),
-      ];
-      const csvContent = csvData.map((row) => row.join(",")).join("\n");
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", "orders_report.csv");
-      link.style.visibility = "hidden";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    },
-  };
+        PDF: () => {
+          const doc = new jsPDF();
+          
+          // Add logo (you'll need to convert your logo to base64 or use a URL)
+          doc.addImage(Logo, 'PNG', 15, 10, 30, 20);
+          
+          // Header section
+          doc.setFontSize(20);
+          doc.setTextColor(51, 122, 183); // Blue color
+          doc.text("SMART LOGISTIC", 50, 20);
+          
+          doc.setFontSize(10);
+          doc.setTextColor(0, 0, 0);
+          doc.text("Email: smartlogistic01@gmail.com", 50, 28);
+          doc.text("Phone: +243 993 861 047 | +243 833 210 038", 50, 34);
+          
+          // Add a line separator
+          doc.setLineWidth(0.5);
+          doc.line(15, 40, 195, 40);
+          
+          // Report title
+          doc.setFontSize(16);
+          doc.setFont("helvetica", "bold");
+          doc.text("ORDER MANAGEMENT REPORT", 15, 52);
+          
+          // Report metadata
+          doc.setFontSize(10);
+          doc.setFont("helvetica", "normal");
+          const reportDate = new Date().toLocaleDateString();
+          doc.text(`Report Generated: ${reportDate}`, 15, 62);
+          doc.text(`Total Records: ${filteredSortedData.length}`, 15, 68);
+          
+          // Check if filters are active
+          const hasActiveFilters = filters.status || filters.warehouse || filters.category || searchQuery;
+          doc.text(`Active Filters: ${hasActiveFilters ? 'Yes' : 'None'}`, 15, 74);
+          
+          // Summary statistics
+          doc.setFont("helvetica", "bold");
+          doc.text("SUMMARY STATISTICS", 15, 86);
+          doc.setFont("helvetica", "normal");
+          
+          const pendingCount = filteredSortedData.filter(o => o.status === 'pending').length;
+          const confirmedCount = filteredSortedData.filter(o => o.status === 'confirmed').length;
+          const rejectedCount = filteredSortedData.filter(o => o.status === 'rejected').length;
+          const totalValue = filteredSortedData.reduce((sum, order) => sum + parseFloat(order.cost_charged || 0), 0);
+          
+          doc.text(`Total Orders: ${filteredSortedData.length}`, 15, 96);
+          doc.text(`Pending: ${pendingCount}`, 50, 96);
+          doc.text(`Active: ${confirmedCount}`, 100, 96);
+          doc.text(`Rejected: ${rejectedCount}`, 15, 102);
+          doc.text(`Approved: ${confirmedCount}`, 50, 102);
+          doc.text(`Total Value: $${totalValue.toFixed(2)}`, 100, 102);
+          
+          // Most common status/origin
+          const statusCounts = filteredSortedData.reduce((acc, o) => {
+            acc[o.status] = (acc[o.status] || 0) + 1;
+            return acc;
+          }, {});
+          const mostCommonStatus = Object.keys(statusCounts).reduce((a, b) => 
+            statusCounts[a] > statusCounts[b] ? a : b
+          );
+          
+          const originCounts = filteredSortedData.reduce((acc, o) => {
+            acc[o.origin] = (acc[o.origin] || 0) + 1;
+            return acc;
+          }, {});
+          const mostCommonOrigin = Object.keys(originCounts).length > 0 ? 
+            Object.keys(originCounts).reduce((a, b) => originCounts[a] > originCounts[b] ? a : b) : 'N/A';
+          
+          doc.text(`Most Common Status: ${mostCommonStatus} (${statusCounts[mostCommonStatus]} orders)`, 15, 108);
+          doc.text(`Most Common Origin: ${mostCommonOrigin} (${originCounts[mostCommonOrigin] || 0} orders)`, 15, 114);
+          
+          // Data table
+          doc.autoTable({
+            head: [["#", "Origin", "Cost ($)", "Status", "Warehouse", "Commodity", "Quantity", "Phone", "Created"]],
+            body: filteredSortedData.map((order, index) => [
+              index + 1,
+              order.origin || 'N/A',
+              parseFloat(order.cost_charged || 0).toFixed(2),
+              order.status.charAt(0).toUpperCase() + order.status.slice(1),
+              order.warehouse_detail?.location || 'N/A',
+              order.commodity_detail?.name || 'N/A',
+              `${order.quantity || 0} ${order.commodity_detail?.unit_of_measurement || ''}`,
+              order.phone_number || 'N/A',
+              new Date(order.created_at).toLocaleDateString(),
+            ]),
+            startY: 125,
+            styles: {
+              fontSize: 7,
+              cellPadding: 2,
+            },
+            headStyles: {
+              fillColor: [51, 122, 183], // Blue header
+              textColor: 255,
+              fontStyle: 'bold'
+            },
+            alternateRowStyles: {
+              fillColor: [245, 245, 245]
+            },
+            margin: { left: 15, right: 15 },
+            columnStyles: {
+              0: { cellWidth: 15 }, // #
+              1: { cellWidth: 20 }, // Origin
+              2: { cellWidth: 18 }, // Cost
+              3: { cellWidth: 18 }, // Status
+              4: { cellWidth: 25 }, // Warehouse
+              5: { cellWidth: 25 }, // Commodity
+              6: { cellWidth: 20 }, // Quantity
+              7: { cellWidth: 22 }, // Phone
+              8: { cellWidth: 20 }, // Created
+            }
+          });
+          
+          // Footer
+          const finalY = doc.lastAutoTable.finalY + 10;
+          doc.setFontSize(8);
+          doc.setTextColor(128, 128, 128);
+          doc.text(`Generated on ${new Date().toLocaleString()}`, 15, finalY);
+          doc.text(`Page 1 of 1`, 180, finalY);
+          
+          doc.save(`order-management-report-${reportDate.replace(/\//g, '-')}.pdf`);
+        },
+      
+        Excel: () => {
+          // Create summary data
+          const pendingCount = filteredSortedData.filter(o => o.status === 'pending').length;
+          const confirmedCount = filteredSortedData.filter(o => o.status === 'confirmed').length;
+          const rejectedCount = filteredSortedData.filter(o => o.status === 'rejected').length;
+          const totalValue = filteredSortedData.reduce((sum, order) => sum + parseFloat(order.cost_charged || 0), 0);
+          
+          // Summary sheet data
+          const summaryData = [
+            ["SMART LOGISTIC"],
+            ["Email: smartlogistic01@gmail.com"],
+            ["Phone: +243 993 861 047 | +243 833 210 038"],
+            [],
+            ["ORDER MANAGEMENT REPORT"],
+            [],
+            ["Report Generated:", new Date().toLocaleDateString()],
+            ["Total Records:", filteredSortedData.length],
+            ["Active Filters:", (filters.status || filters.warehouse || filters.category || searchQuery) ? 'Yes' : 'None'],
+            [],
+            ["SUMMARY STATISTICS"],
+            ["Total Orders:", filteredSortedData.length],
+            ["Pending:", pendingCount],
+            ["Confirmed:", confirmedCount],
+            ["Rejected:", rejectedCount],
+            ["Total Value:", `$${totalValue.toFixed(2)}`],
+            [],
+            ["DETAILED DATA"],
+            ["ID", "Origin", "Cost ($)", "Status", "Warehouse", "Commodity", "Quantity", "Phone", "Created", "Updated"],
+            ...filteredSortedData.map((order) => [
+              order.id,
+              order.origin || 'N/A',
+              parseFloat(order.cost_charged || 0).toFixed(2),
+              order.status.charAt(0).toUpperCase() + order.status.slice(1),
+              order.warehouse_detail?.location || 'N/A',
+              order.commodity_detail?.name || 'N/A',
+              `${order.quantity || 0} ${order.commodity_detail?.unit_of_measurement || ''}`,
+              order.phone_number || 'N/A',
+              new Date(order.created_at).toLocaleDateString(),
+              order.updated_at ? new Date(order.updated_at).toLocaleDateString() : 'N/A'
+            ])
+          ];
+          
+          const worksheet = XLSX.utils.aoa_to_sheet(summaryData);
+          
+          // Style the header rows
+          worksheet['A1'] = { v: 'SMART LOGISTIC', t: 's', s: { font: { bold: true, sz: 16 } } };
+          worksheet['A5'] = { v: 'ORDER MANAGEMENT REPORT', t: 's', s: { font: { bold: true, sz: 14 } } };
+          worksheet['A11'] = { v: 'SUMMARY STATISTICS', t: 's', s: { font: { bold: true, sz: 12 } } };
+          worksheet['A18'] = { v: 'DETAILED DATA', t: 's', s: { font: { bold: true, sz: 12 } } };
+          
+          const workbook = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(workbook, worksheet, "Order Report");
+          
+          const reportDate = new Date().toLocaleDateString().replace(/\//g, '-');
+          XLSX.writeFile(workbook, `order-management-report-${reportDate}.xlsx`);
+        },
+      
+        CSV: () => {
+          const reportDate = new Date().toLocaleDateString();
+          const pendingCount = filteredSortedData.filter(o => o.status === 'pending').length;
+          const confirmedCount = filteredSortedData.filter(o => o.status === 'confirmed').length;
+          const rejectedCount = filteredSortedData.filter(o => o.status === 'rejected').length;
+          const totalValue = filteredSortedData.reduce((sum, order) => sum + parseFloat(order.cost_charged || 0), 0);
+          
+          const csvContent = [
+            // Header information
+            ["SMART LOGISTIC"],
+            ["Email: smartlogistic01@gmail.com"],
+            ["Phone: +243 993 861 047 | +243 833 210 038"],
+            [],
+            ["ORDER MANAGEMENT REPORT"],
+            [],
+            ["Report Generated", reportDate],
+            ["Total Records", filteredSortedData.length],
+            ["Active Filters", (filters.status || filters.warehouse || filters.category || searchQuery) ? 'Yes' : 'None'],
+            [],
+            ["SUMMARY STATISTICS"],
+            ["Total Orders", filteredSortedData.length],
+            ["Pending Orders", pendingCount],
+            ["Confirmed Orders", confirmedCount],
+            ["Rejected Orders", rejectedCount],
+            ["Total Value", `$${totalValue.toFixed(2)}`],
+            [],
+            ["DETAILED DATA"],
+            ["#", "ID", "Origin", "Cost ($)", "Status", "Warehouse", "Commodity", "Quantity", "Phone", "Created"],
+            ...filteredSortedData.map((order, index) => [
+              index + 1,
+              order.id,
+              order.origin || 'N/A',
+              parseFloat(order.cost_charged || 0).toFixed(2),
+              order.status.charAt(0).toUpperCase() + order.status.slice(1),
+              order.warehouse_detail?.location || 'N/A',
+              order.commodity_detail?.name || 'N/A',
+              `${order.quantity || 0} ${order.commodity_detail?.unit_of_measurement || ''}`,
+              order.phone_number || 'N/A',
+              new Date(order.created_at).toLocaleDateString(),
+            ]),
+          ]
+            .map((row) => Array.isArray(row) ? row.join(",") : row)
+            .join("\n");
+      
+          const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.setAttribute("href", url);
+          link.setAttribute("download", `order-management-report-${reportDate.replace(/\//g, '-')}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        },
+      };
 
   const openCreateModal = () => {
     setIsEditMode(false);

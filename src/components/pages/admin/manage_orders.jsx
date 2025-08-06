@@ -435,8 +435,7 @@ function Admin_OrderManagement() {
     }
   };
 
-  // Replace the existing handleDownload object (around lines 370-400) with this enhanced version
-const handleDownload = {
+ const handleDownload = {
   PDF: () => {
     const doc = new jsPDF();
     

@@ -47,6 +47,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import Logo from "../../../assets/pictures/logo.png";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -753,30 +754,281 @@ function Dispatcher_Manage_Man_Powers() {
   const handleDownload = {
     PDF: () => {
       const doc = new jsPDF();
-      doc.autoTable({ html: "#man_power-table" });
-      doc.save("man_powers.pdf");
+      
+      // Add logo (you'll need to convert your logo to base64 or use a URL)
+      doc.addImage(Logo, 'PNG', 15, 15, 25, 25);
+      
+      // Header
+      doc.setFontSize(16);
+      doc.setTextColor(40, 40, 40);
+      doc.text('SMART LOGISTIC', 50, 25);
+      
+      doc.setFontSize(10);
+      doc.text('Email: smartlogistic01@gmail.com', 50, 32);
+      doc.text('Phone: +243 993 861 047 | +243 833 210 038', 50, 37);
+      
+      // Title
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text('MANPOWER MANAGEMENT REPORT', 15, 55);
+      
+      // Report info
+      doc.setFontSize(10);
+      const activeFiltersCount = Object.values(filters).filter(f => 
+        typeof f === 'string' ? f !== '' : 
+        typeof f === 'object' ? Object.values(f).some(v => v !== '') : false
+      ).length;
+      
+      doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, 15, 65);
+      doc.text(`Total Records: ${filteredData.length}`, 15, 70);
+      doc.text(`Active Filters: ${activeFiltersCount > 0 ? 'Yes' : 'None'}`, 15, 75);
+      
+      // Summary Statistics
+      doc.setFontSize(12);
+      doc.text('SUMMARY STATISTICS', 15, 90);
+      
+      doc.setFontSize(10);
+      const totalManpower = filteredData.length;
+      const approvedManpower = filteredData.filter(m => m.status === 'approved').length;
+      const rejectedManpower = filteredData.filter(m => m.status === 'rejected').length;
+      const activeManpower = filteredData.filter(m => m.availability_status === 'active').length;
+      const inactiveManpower = filteredData.filter(m => m.availability_status === 'inactive').length;
+      const maleCount = filteredData.filter(m => m.gender === 'male').length;
+      const femaleCount = filteredData.filter(m => m.gender === 'female').length;
+      
+      doc.text(`Total Manpower: ${totalManpower}`, 15, 100);
+      doc.text(`Approved: ${approvedManpower}`, 100, 100);
+      doc.text(`Rejected: ${rejectedManpower}`, 15, 105);
+      doc.text(`Active: ${activeManpower}`, 100, 105);
+      doc.text(`Inactive: ${inactiveManpower}`, 15, 110);
+      doc.text(`Male: ${maleCount}`, 100, 110);
+      doc.text(`Female: ${femaleCount}`, 15, 115);
+      
+      // Status distribution
+      doc.text('Status Distribution:', 15, 125);
+      doc.text(`Approved: ${approvedManpower} (${totalManpower ? (approvedManpower/totalManpower*100).toFixed(1) : 0}%)`, 15, 135);
+      doc.text(`Rejected: ${rejectedManpower} (${totalManpower ? (rejectedManpower/totalManpower*100).toFixed(1) : 0}%)`, 100, 135);
+      
+      // Availability distribution
+      doc.text('Availability Distribution:', 15, 145);
+      doc.text(`Active: ${activeManpower} (${totalManpower ? (activeManpower/totalManpower*100).toFixed(1) : 0}%)`, 15, 155);
+      doc.text(`Inactive: ${inactiveManpower} (${totalManpower ? (inactiveManpower/totalManpower*100).toFixed(1) : 0}%)`, 100, 155);
+      
+      // Prepare table data from filtered results
+      const tableData = filteredData.map((manpower, index) => [
+        index + 1,
+        `${manpower.first_name} ${manpower.last_name}`,
+        manpower.phone_number,
+        manpower.email,
+        manpower.gender.charAt(0).toUpperCase() + manpower.gender.slice(1),
+        manpower.residence,
+        manpower.status.toUpperCase(),
+        manpower.availability_status.toUpperCase()
+      ]);
+      
+      // Add table
+      doc.autoTable({
+        startY: 165,
+        head: [['#', 'Full Name', 'Phone', 'Email', 'Gender', 'Residence', 'Status', 'Availability']],
+        body: tableData,
+        theme: 'grid',
+        styles: { fontSize: 8 },
+        headStyles: { fillColor: [66, 139, 202] },
+        columnStyles: {
+          1: { cellWidth: 25 },
+          2: { cellWidth: 20 },
+          3: { cellWidth: 30 },
+          4: { cellWidth: 15 },
+          5: { cellWidth: 20 },
+          6: { cellWidth: 20 },
+          7: { cellWidth: 20 }
+        }
+      });
+      
+      // Footer
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(8);
+      doc.text(`Generated on ${new Date().toLocaleDateString()}, ${new Date().toLocaleTimeString()}`, 15, finalY);
+      doc.text(`Page 1 of 1`, doc.internal.pageSize.width - 30, finalY);
+      
+      doc.save('manpower_report.pdf');
     },
+    
     Excel: () => {
+      // Create workbook
       const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(
-        workbook,
-        XLSX.utils.json_to_sheet(man_powersData),
-        "man_powers"
-      );
-      XLSX.writeFile(workbook, "man_powers.xlsx");
+      
+      // Calculate statistics
+      const totalManpower = filteredData.length;
+      const approvedManpower = filteredData.filter(m => m.status === 'approved').length;
+      const rejectedManpower = filteredData.filter(m => m.status === 'rejected').length;
+      const activeManpower = filteredData.filter(m => m.availability_status === 'active').length;
+      const inactiveManpower = filteredData.filter(m => m.availability_status === 'inactive').length;
+      const maleCount = filteredData.filter(m => m.gender === 'male').length;
+      const femaleCount = filteredData.filter(m => m.gender === 'female').length;
+      
+      const activeFiltersCount = Object.values(filters).filter(f => 
+        typeof f === 'string' ? f !== '' : 
+        typeof f === 'object' ? Object.values(f).some(v => v !== '') : false
+      ).length;
+      
+      // Prepare summary data
+      const summaryData = [
+        ['MANPOWER MANAGEMENT REPORT'],
+        [''],
+        ['Report Generated:', new Date().toLocaleDateString()],
+        ['Total Records:', totalManpower],
+        ['Active Filters:', activeFiltersCount > 0 ? 'Yes' : 'None'],
+        [''],
+        ['SUMMARY STATISTICS'],
+        ['Total Manpower:', totalManpower],
+        ['Approved:', approvedManpower],
+        ['Rejected:', rejectedManpower],
+        ['Active:', activeManpower],
+        ['Inactive:', inactiveManpower],
+        ['Male:', maleCount],
+        ['Female:', femaleCount],
+        [''],
+        ['STATUS DISTRIBUTION'],
+        ['Approved:', `${approvedManpower} (${totalManpower ? (approvedManpower/totalManpower*100).toFixed(1) : 0}%)`],
+        ['Rejected:', `${rejectedManpower} (${totalManpower ? (rejectedManpower/totalManpower*100).toFixed(1) : 0}%)`],
+        [''],
+        ['AVAILABILITY DISTRIBUTION'],
+        ['Active:', `${activeManpower} (${totalManpower ? (activeManpower/totalManpower*100).toFixed(1) : 0}%)`],
+        ['Inactive:', `${inactiveManpower} (${totalManpower ? (inactiveManpower/totalManpower*100).toFixed(1) : 0}%)`],
+        [''],
+        ['GENDER DISTRIBUTION'],
+        ['Male:', `${maleCount} (${totalManpower ? (maleCount/totalManpower*100).toFixed(1) : 0}%)`],
+        ['Female:', `${femaleCount} (${totalManpower ? (femaleCount/totalManpower*100).toFixed(1) : 0}%)`],
+        [''],
+        ['DETAILED DATA']
+      ];
+      
+      // Prepare detailed data
+      const detailedData = [
+        ['#', 'First Name', 'Last Name', 'Full Name', 'Phone Number', 'Email', 'Gender', 'National ID', 'Residence', 'Status', 'Availability Status'],
+        ...filteredData.map((manpower, index) => [
+          index + 1,
+          manpower.first_name,
+          manpower.last_name,
+          `${manpower.first_name} ${manpower.last_name}`,
+          manpower.phone_number,
+          manpower.email,
+          manpower.gender.charAt(0).toUpperCase() + manpower.gender.slice(1),
+          manpower.national_id_number || 'N/A',
+          manpower.residence,
+          manpower.status.toUpperCase(),
+          manpower.availability_status.toUpperCase()
+        ])
+      ];
+      
+      // Create summary sheet
+      const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+      XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+      
+      // Create detailed data sheet
+      const detailedSheet = XLSX.utils.aoa_to_sheet(detailedData);
+      XLSX.utils.book_append_sheet(workbook, detailedSheet, 'Detailed Data');
+      
+      // Create statistics sheet
+      const statisticsData = [
+        ['MANPOWER STATISTICS'],
+        [''],
+        ['Category', 'Count', 'Percentage'],
+        ['Total Manpower', totalManpower, '100%'],
+        [''],
+        ['BY STATUS'],
+        ['Approved', approvedManpower, `${totalManpower ? (approvedManpower/totalManpower*100).toFixed(1) : 0}%`],
+        ['Rejected', rejectedManpower, `${totalManpower ? (rejectedManpower/totalManpower*100).toFixed(1) : 0}%`],
+        [''],
+        ['BY AVAILABILITY'],
+        ['Active', activeManpower, `${totalManpower ? (activeManpower/totalManpower*100).toFixed(1) : 0}%`],
+        ['Inactive', inactiveManpower, `${totalManpower ? (inactiveManpower/totalManpower*100).toFixed(1) : 0}%`],
+        [''],
+        ['BY GENDER'],
+        ['Male', maleCount, `${totalManpower ? (maleCount/totalManpower*100).toFixed(1) : 0}%`],
+        ['Female', femaleCount, `${totalManpower ? (femaleCount/totalManpower*100).toFixed(1) : 0}%`]
+      ];
+      
+      const statisticsSheet = XLSX.utils.aoa_to_sheet(statisticsData);
+      XLSX.utils.book_append_sheet(workbook, statisticsSheet, 'Statistics');
+      
+      XLSX.writeFile(workbook, 'manpower_report.xlsx');
     },
+    
     CSV: () => {
-      const csvContent =
-        "data:text/csv;charset=utf-8," +
-        Object.keys(man_powersData[0]).join(",") +
-        "\n" +
-        man_powersData.map((row) => Object.values(row).join(",")).join("\n");
-      const link = document.createElement("a");
-      link.setAttribute("href", encodeURI(csvContent));
-      link.setAttribute("download", "man_powers.csv");
+      // Calculate statistics
+      const totalManpower = filteredData.length;
+      const approvedManpower = filteredData.filter(m => m.status === 'approved').length;
+      const rejectedManpower = filteredData.filter(m => m.status === 'rejected').length;
+      const activeManpower = filteredData.filter(m => m.availability_status === 'active').length;
+      const inactiveManpower = filteredData.filter(m => m.availability_status === 'inactive').length;
+      const maleCount = filteredData.filter(m => m.gender === 'male').length;
+      const femaleCount = filteredData.filter(m => m.gender === 'female').length;
+      
+      const activeFiltersCount = Object.values(filters).filter(f => 
+        typeof f === 'string' ? f !== '' : 
+        typeof f === 'object' ? Object.values(f).some(v => v !== '') : false
+      ).length;
+      
+      // Create header with report info
+      const reportHeader = [
+        'MANPOWER MANAGEMENT REPORT',
+        `Report Generated: ${new Date().toLocaleDateString()}`,
+        `Total Records: ${totalManpower}`,
+        `Active Filters: ${activeFiltersCount > 0 ? 'Yes' : 'None'}`,
+        '',
+        'SUMMARY STATISTICS',
+        `Total Manpower: ${totalManpower}`,
+        `Approved: ${approvedManpower}`,
+        `Rejected: ${rejectedManpower}`,
+        `Active: ${activeManpower}`,
+        `Inactive: ${inactiveManpower}`,
+        `Male: ${maleCount}`,
+        `Female: ${femaleCount}`,
+        '',
+        'STATUS DISTRIBUTION',
+        `Approved: ${approvedManpower} (${totalManpower ? (approvedManpower/totalManpower*100).toFixed(1) : 0}%)`,
+        `Rejected: ${rejectedManpower} (${totalManpower ? (rejectedManpower/totalManpower*100).toFixed(1) : 0}%)`,
+        '',
+        'AVAILABILITY DISTRIBUTION',
+        `Active: ${activeManpower} (${totalManpower ? (activeManpower/totalManpower*100).toFixed(1) : 0}%)`,
+        `Inactive: ${inactiveManpower} (${totalManpower ? (inactiveManpower/totalManpower*100).toFixed(1) : 0}%)`,
+        '',
+        'GENDER DISTRIBUTION',
+        `Male: ${maleCount} (${totalManpower ? (maleCount/totalManpower*100).toFixed(1) : 0}%)`,
+        `Female: ${femaleCount} (${totalManpower ? (femaleCount/totalManpower*100).toFixed(1) : 0}%)`,
+        '',
+        'DETAILED DATA',
+        'Index,First Name,Last Name,Full Name,Phone Number,Email,Gender,National ID,Residence,Status,Availability Status'
+      ].join('\n');
+      
+      // Create data rows from filtered data
+      const csvData = filteredData.map((manpower, index) => [
+        index + 1,
+        `"${manpower.first_name}"`,
+        `"${manpower.last_name}"`,
+        `"${manpower.first_name} ${manpower.last_name}"`,
+        manpower.phone_number,
+        manpower.email,
+        manpower.gender.charAt(0).toUpperCase() + manpower.gender.slice(1),
+        manpower.national_id_number || 'N/A',
+        `"${manpower.residence}"`,
+        manpower.status.toUpperCase(),
+        manpower.availability_status.toUpperCase()
+      ].join(','));
+      
+      const csvContent = reportHeader + '\n' + csvData.join('\n');
+      
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'manpower_report.csv');
+      link.style.visibility = 'hidden';
       document.body.appendChild(link);
       link.click();
-      link.remove();
+      document.body.removeChild(link);
     },
   };
 

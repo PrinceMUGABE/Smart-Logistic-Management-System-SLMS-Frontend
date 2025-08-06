@@ -26,6 +26,7 @@ import {
   faChartPie,
   faPlus,
 } from "@fortawesome/free-solid-svg-icons";
+import Logo from "../../../assets/pictures/logo.png";
 import {
   ResponsiveContainer,
   BarChart,
@@ -376,35 +377,209 @@ const renderModal = () => {
   };
 
   const handleDownload = {
-    PDF: () => {
-      const doc = new jsPDF();
-      doc.autoTable({ html: "#delivery-table" });
-      doc.save("deliveries.pdf");
-    },
-    Excel: () => {
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(
-        workbook,
-        XLSX.utils.json_to_sheet(deliveryData),
-        "Deliveries"
-      );
-      XLSX.writeFile(workbook, "deliveries.xlsx");
-    },
-    CSV: () => {
-      const csvContent =
-        "data:text/csv;charset=utf-8," +
-        Object.keys(deliveryData[0]).join(",") +
-        "\n" +
-        deliveryData.map((row) => Object.values(row).join(",")).join("\n");
-      const link = document.createElement("a");
-      link.setAttribute("href", encodeURI(csvContent));
-      link.setAttribute("download", "deliveries.csv");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    },
-  };
-
+     PDF: () => {
+       const doc = new jsPDF();
+       
+       // Add logo (you'll need to convert your logo to base64 or use a URL)
+       doc.addImage(Logo, 'PNG', 15, 10, 30, 20);
+       
+       // Company header
+       doc.setFontSize(16);
+       doc.setTextColor(41, 128, 185); // Blue color
+       doc.text('SMART LOGISTIC', 50, 20);
+       
+       doc.setFontSize(10);
+       doc.setTextColor(0, 0, 0);
+       doc.text('Email: smartlogistic01@gmail.com', 50, 27);
+       doc.text('Phone: +243 993 861 047 | +243 833 210 038', 50, 32);
+       
+       // Report title
+       doc.setFontSize(14);
+       doc.setTextColor(0, 0, 0);
+       doc.text('DELIVERY MANAGEMENT REPORT', 15, 50);
+       
+       // Report metadata
+       doc.setFontSize(9);
+       const currentDate = new Date().toLocaleDateString();
+       doc.text(`Report Generated: ${currentDate}`, 15, 60);
+       doc.text(`Total Records: ${filteredAndSortedData.length}`, 15, 65);
+       
+       // Active filters info
+       const activeFiltersList = Object.entries(activeFilters)
+         .filter(([key, value]) => value.length > 0)
+         .map(([key, value]) => `${key}: ${value.join(', ')}`)
+         .join(', ');
+       doc.text(`Active Filters: ${activeFiltersList || 'None'}`, 15, 70);
+       
+       // Summary statistics
+       const stats = getSummaryStats();
+       doc.setFontSize(11);
+       doc.text('SUMMARY STATISTICS', 15, 85);
+       
+       doc.setFontSize(9);
+       doc.text(`Total Deliveries: ${stats.totalDeliveries}`, 15, 95);
+       doc.text(`In Process: ${stats.inProcessCount}`, 80, 95);
+       doc.text(`Completed: ${stats.completedCount}`, 140, 95);
+       
+       // Most common status
+       const statusCounts = filteredAndSortedData.reduce((acc, delivery) => {
+         acc[delivery.status] = (acc[delivery.status] || 0) + 1;
+         return acc;
+       }, {});
+       const mostCommonStatus = Object.entries(statusCounts)
+         .sort(([,a], [,b]) => b - a)[0];
+       
+       if (mostCommonStatus) {
+         doc.text(`Most Common Status: ${mostCommonStatus[0]} (${mostCommonStatus[1]} deliveries)`, 15, 105);
+       }
+       
+       // Most active driver
+       const driverCounts = filteredAndSortedData.reduce((acc, delivery) => {
+         const driverName = delivery.driver_details?.user_name || 'Unknown';
+         acc[driverName] = (acc[driverName] || 0) + 1;
+         return acc;
+       }, {});
+       const mostActiveDriver = Object.entries(driverCounts)
+         .sort(([,a], [,b]) => b - a)[0];
+       
+       if (mostActiveDriver) {
+         doc.text(`Most Active Driver: ${mostActiveDriver[0]} (${mostActiveDriver[1]} deliveries)`, 15, 110);
+       }
+       
+       // Prepare table data
+       const tableData = filteredAndSortedData.map((delivery, index) => [
+         index + 1,
+         delivery.order_details?.origin || 'N/A',
+         delivery.warehouse?.warehouse_detail?.location || 'N/A',
+         delivery.driver_details?.user_name || 'N/A',
+         delivery.vehicle_details?.plate_number || 'N/A',
+         delivery.status === 'completed' ? 'Completed' : 'In Process',
+         new Date(delivery.created_at).toLocaleDateString()
+       ]);
+       
+       // Add table
+       doc.autoTable({
+         head: [['#', 'Order Origin', 'Warehouse', 'Driver', 'Vehicle', 'Status', 'Created Date']],
+         body: tableData,
+         startY: 125,
+         theme: 'grid',
+         headStyles: {
+           fillColor: [41, 128, 185],
+           textColor: [255, 255, 255],
+           fontSize: 9
+         },
+         bodyStyles: {
+           fontSize: 8,
+           textColor: [0, 0, 0]
+         },
+         alternateRowStyles: {
+           fillColor: [245, 245, 245]
+         },
+         margin: { top: 125, left: 15, right: 15 }
+       });
+       
+       // Footer
+       const pageCount = doc.internal.getNumberOfPages();
+       doc.setFontSize(8);
+       doc.text(`Generated on ${new Date().toLocaleString()}`, 15, doc.internal.pageSize.height - 10);
+       doc.text(`Page 1 of ${pageCount}`, doc.internal.pageSize.width - 30, doc.internal.pageSize.height - 10);
+       
+       doc.save('deliveries_report.pdf');
+     },
+     
+     Excel: () => {
+       // Create summary sheet data
+       const stats = getSummaryStats();
+       const summaryData = [
+         ['DELIVERY MANAGEMENT REPORT'],
+         [''],
+         ['Report Generated:', new Date().toLocaleDateString()],
+         ['Total Records:', filteredAndSortedData.length],
+         ['Active Filters:', Object.entries(activeFilters)
+           .filter(([key, value]) => value.length > 0)
+           .map(([key, value]) => `${key}: ${value.join(', ')}`)
+           .join(', ') || 'None'],
+         [''],
+         ['SUMMARY STATISTICS'],
+         ['Total Deliveries:', stats.totalDeliveries],
+         ['In Process:', stats.inProcessCount],
+         ['Completed:', stats.completedCount],
+         [''],
+         ['DELIVERY DATA']
+       ];
+       
+       // Prepare detailed data with headers
+       const detailedData = [
+         ['#', 'Order Origin', 'Warehouse', 'Driver', 'Vehicle', 'Status', 'Created Date'],
+         ...filteredAndSortedData.map((delivery, index) => [
+           index + 1,
+           delivery.order_details?.origin || 'N/A',
+           delivery.warehouse?.warehouse_detail?.location || 'N/A',
+           delivery.driver_details?.user_name || 'N/A',
+           delivery.vehicle_details?.plate_number || 'N/A',
+           delivery.status === 'completed' ? 'Completed' : 'In Process',
+           new Date(delivery.created_at).toLocaleDateString()
+         ])
+       ];
+       
+       const workbook = XLSX.utils.book_new();
+       
+       // Create summary sheet
+       const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+       XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+       
+       // Create detailed data sheet
+       const detailSheet = XLSX.utils.aoa_to_sheet(detailedData);
+       XLSX.utils.book_append_sheet(workbook, detailSheet, 'Deliveries');
+       
+       XLSX.writeFile(workbook, 'deliveries_report.xlsx');
+     },
+     
+     CSV: () => {
+       // Create header with metadata
+       const stats = getSummaryStats();
+       const header = [
+         'DELIVERY MANAGEMENT REPORT',
+         `Report Generated: ${new Date().toLocaleDateString()}`,
+         `Total Records: ${filteredAndSortedData.length}`,
+         `Active Filters: ${Object.entries(activeFilters)
+           .filter(([key, value]) => value.length > 0)
+           .map(([key, value]) => `${key}: ${value.join(', ')}`)
+           .join(', ') || 'None'}`,
+         '',
+         'SUMMARY STATISTICS',
+         `Total Deliveries: ${stats.totalDeliveries}`,
+         `In Process: ${stats.inProcessCount}`,
+         `Completed: ${stats.completedCount}`,
+         '',
+         'DELIVERY DATA',
+         '#,Order Origin,Warehouse,Driver,Vehicle,Status,Created Date'
+       ].join('\n');
+       
+       // Create data rows
+       const dataRows = filteredAndSortedData.map((delivery, index) => [
+         index + 1,
+         `"${delivery.order_details?.origin || 'N/A'}"`,
+         `"${delivery.warehouse?.warehouse_detail?.location || 'N/A'}"`,
+         `"${delivery.driver_details?.user_name || 'N/A'}"`,
+         `"${delivery.vehicle_details?.plate_number || 'N/A'}"`,
+         `"${delivery.status === 'completed' ? 'Completed' : 'In Process'}"`,
+         `"${new Date(delivery.created_at).toLocaleDateString()}"`
+       ].join(',')).join('\n');
+       
+       const csvContent = header + '\n' + dataRows;
+       
+       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+       const link = document.createElement('a');
+       const url = URL.createObjectURL(blob);
+       link.setAttribute('href', url);
+       link.setAttribute('download', 'deliveries_report.csv');
+       link.style.visibility = 'hidden';
+       document.body.appendChild(link);
+       link.click();
+       document.body.removeChild(link);
+     },
+   };
   // Modified handleAddUpdateDelivery function
 // 2. Modified handleAddUpdateDelivery function
 const handleAddUpdateDelivery = async (e) => {

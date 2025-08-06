@@ -607,7 +607,7 @@ const WarehouseManagement = () => {
   };
 
   // Download handlers
-  // Replace the existing handleDownload object with this enhanced version
+  
   const handleDownload = {
     PDF: () => {
       const doc = new jsPDF();
