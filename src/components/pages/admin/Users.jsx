@@ -14,6 +14,7 @@ import {
   faChartBar, faChartArea
 } from "@fortawesome/free-solid-svg-icons";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, AreaChart, Area, Pie, Cell } from 'recharts';
+import Logo from "../../../assets/pictures/logo.png"
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -115,29 +116,214 @@ function Users() {
     }
   };
 
-  const handleDownload = {
-    PDF: () => {
-      const doc = new jsPDF();
-      doc.autoTable({ html: '#user-table' });
-      doc.save('users.pdf');
-    },
-    Excel: () => {
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, XLSX.utils.json_to_sheet(filteredSortedData), "Users");
-      XLSX.writeFile(workbook, "users.xlsx");
-    },
-    CSV: () => {
-      const csvContent = "data:text/csv;charset=utf-8," + 
-        Object.keys(filteredSortedData[0]).join(",") + "\n" +
-        filteredSortedData.map(row => Object.values(row).join(",")).join("\n");
-      const link = document.createElement("a");
-      link.setAttribute("href", encodeURI(csvContent));
-      link.setAttribute("download", "users.csv");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
+  // Replace the existing handleDownload object with this enhanced version
+const handleDownload = {
+  PDF: () => {
+    const doc = new jsPDF();
+    
+    // Add logo (you'll need to convert your logo to base64 or use a URL)
+    doc.addImage(Logo, 'PNG', 20, 15, 30, 30);
+    
+    // Company Header
+    doc.setFontSize(20);
+    doc.setTextColor(59, 130, 246); // Blue color
+    doc.text('SMART LOGISTIC', 60, 25);
+    doc.setFontSize(12);
+    // doc.text('(DEP)', 60, 32);
+    
+    // Contact Information
+    doc.setFontSize(10);
+    doc.setTextColor(0, 0, 0);
+    doc.text('Email: logistic01@gmail.com', 60, 40);
+    doc.text('Phone: +243 993 861 047 | +243 833 210 038', 60, 45);
+    
+    // Add line separator
+    doc.line(20, 55, 190, 55);
+    
+    // Report Title
+    doc.setFontSize(16);
+    doc.setTextColor(0, 0, 0);
+    doc.text('USER MANAGEMENT REPORT', 20, 70);
+    
+    // Report Period and Filter Information
+    doc.setFontSize(10);
+    const currentDate = new Date().toLocaleDateString();
+    doc.text(`Report Generated: ${currentDate}`, 20, 80);
+    doc.text(`Total Records: ${filteredSortedData.length}`, 20, 85);
+    
+    // Add filter information if any filters are active
+    let yPosition = 90;
+    if (filters.role || filters.dateFrom || filters.dateTo || searchQuery) {
+      doc.text('Active Filters:', 20, yPosition);
+      yPosition += 5;
+      
+      if (searchQuery) {
+        doc.text(`• Search: "${searchQuery}"`, 25, yPosition);
+        yPosition += 5;
+      }
+      if (filters.role) {
+        doc.text(`• Role: ${getRoleDisplayName(filters.role)}`, 25, yPosition);
+        yPosition += 5;
+      }
+      if (filters.dateFrom) {
+        doc.text(`• From Date: ${new Date(filters.dateFrom).toLocaleDateString()}`, 25, yPosition);
+        yPosition += 5;
+      }
+      if (filters.dateTo) {
+        doc.text(`• To Date: ${new Date(filters.dateTo).toLocaleDateString()}`, 25, yPosition);
+        yPosition += 5;
+      }
     }
-  };
+    
+    // Summary Statistics
+    yPosition += 10;
+    doc.setFontSize(12);
+    doc.text('SUMMARY STATISTICS', 20, yPosition);
+    yPosition += 10;
+    
+    doc.setFontSize(10);
+    doc.text(`Total Users: ${summaryMetrics.total}`, 20, yPosition);
+    doc.text(`Admins: ${summaryMetrics.admins}`, 70, yPosition);
+    doc.text(`Customers: ${summaryMetrics.customers}`, 120, yPosition);
+    yPosition += 5;
+    doc.text(`Drivers: ${summaryMetrics.drivers}`, 20, yPosition);
+    doc.text(`New Users (30 days): ${summaryMetrics.newUsersLast30Days}`, 70, yPosition);
+    
+    // Table data
+    const tableData = filteredSortedData.map((user, index) => [
+      index + 1,
+      user.phone_number || 'N/A',
+      user.email || 'N/A',
+      getRoleDisplayName(user.role),
+      new Date(user.created_at).toLocaleDateString()
+    ]);
+    
+    // Add table
+    doc.autoTable({
+      startY: yPosition + 15,
+      head: [['#', 'Phone', 'Email', 'Role', 'Created Date']],
+      body: tableData,
+      styles: { 
+        fontSize: 9,
+        cellPadding: 3
+      },
+      headStyles: { 
+        fillColor: [59, 130, 246],
+        textColor: [255, 255, 255],
+        fontSize: 10
+      },
+      alternateRowStyles: {
+        fillColor: [248, 250, 252]
+      },
+      margin: { left: 20, right: 20 }
+    });
+    
+    // Footer
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Page ${i} of ${pageCount}`, 20, doc.internal.pageSize.height - 10);
+      doc.text(`Generated on ${currentDate}`, doc.internal.pageSize.width - 60, doc.internal.pageSize.height - 10);
+    }
+    
+    doc.save(`user-report-${currentDate.replace(/\//g, '-')}.pdf`);
+  },
+  
+  Excel: () => {
+    const workbook = XLSX.utils.book_new();
+    
+    // Create summary sheet
+    const summaryData = [
+      ['USER MANAGEMENT REPORT'],
+      [''],
+      ['Company:', 'SMART LOGIST CO LTD'],
+      ['Email:', 'depprotection01@gmail.com'],
+      ['Phone:', '+243 993 861 047 | +243 833 210 038'],
+      [''],
+      ['Report Generated:', new Date().toLocaleDateString()],
+      ['Total Records:', filteredSortedData.length],
+      [''],
+      ['SUMMARY STATISTICS'],
+      ['Total Users:', summaryMetrics.total],
+      ['Admins:', summaryMetrics.admins],
+      ['Customers:', summaryMetrics.customers],
+      ['Drivers:', summaryMetrics.drivers],
+      ['New Users (30 days):', summaryMetrics.newUsersLast30Days],
+      [''],
+      ['ACTIVE FILTERS'],
+    ];
+    
+    // Add filter information
+    if (searchQuery) summaryData.push(['Search Query:', searchQuery]);
+    if (filters.role) summaryData.push(['Role Filter:', getRoleDisplayName(filters.role)]);
+    if (filters.dateFrom) summaryData.push(['Date From:', new Date(filters.dateFrom).toLocaleDateString()]);
+    if (filters.dateTo) summaryData.push(['Date To:', new Date(filters.dateTo).toLocaleDateString()]);
+    
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, "Summary");
+    
+    // Create main data sheet with filtered data
+    const userData = filteredSortedData.map((user, index) => ({
+      'Serial No.': index + 1,
+      'Phone Number': user.phone_number || 'N/A',
+      'Email': user.email || 'N/A',
+      'Role': getRoleDisplayName(user.role),
+      'Created Date': new Date(user.created_at).toLocaleDateString(),
+      'Status': 'Active' // You can modify this based on your data structure
+    }));
+    
+    const dataSheet = XLSX.utils.json_to_sheet(userData);
+    XLSX.utils.book_append_sheet(workbook, dataSheet, "User Data");
+    
+    const fileName = `user-report-${new Date().toLocaleDateString().replace(/\//g, '-')}.xlsx`;
+    XLSX.writeFile(workbook, fileName);
+  },
+  
+  CSV: () => {
+    // Create header with company information
+    const header = [
+      'SMART LOGIST CO LTD- USER REPORT',
+      `Report Generated: ${new Date().toLocaleDateString()}`,
+      `Total Records: ${filteredSortedData.length}`,
+      '',
+      'SUMMARY STATISTICS',
+      `Total Users: ${summaryMetrics.total}, Admins: ${summaryMetrics.admins}, Customers: ${summaryMetrics.customers}, Drivers: ${summaryMetrics.drivers}`,
+      ''
+    ];
+    
+    // Add filter information if active
+    if (searchQuery || filters.role || filters.dateFrom || filters.dateTo) {
+      header.push('ACTIVE FILTERS');
+      if (searchQuery) header.push(`Search: ${searchQuery}`);
+      if (filters.role) header.push(`Role: ${getRoleDisplayName(filters.role)}`);
+      if (filters.dateFrom) header.push(`From Date: ${new Date(filters.dateFrom).toLocaleDateString()}`);
+      if (filters.dateTo) header.push(`To Date: ${new Date(filters.dateTo).toLocaleDateString()}`);
+      header.push('');
+    }
+    
+    // Add table headers
+    header.push('USER DATA');
+    header.push('Serial No.,Phone Number,Email,Role,Created Date');
+    
+    // Add data rows
+    const dataRows = filteredSortedData.map((user, index) => 
+      `${index + 1},"${user.phone_number || 'N/A'}","${user.email || 'N/A'}","${getRoleDisplayName(user.role)}","${new Date(user.created_at).toLocaleDateString()}"`
+    );
+    
+    const csvContent = "data:text/csv;charset=utf-8," + 
+      header.join("\n") + "\n" + 
+      dataRows.join("\n");
+    
+    const link = document.createElement("a");
+    link.setAttribute("href", encodeURI(csvContent));
+    link.setAttribute("download", `user-report-${new Date().toLocaleDateString().replace(/\//g, '-')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  }
+};
 
   const getRoleDisplayName = role => ({
     admin: "Admin",

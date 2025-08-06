@@ -52,6 +52,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
+import Logo from "../../../assets/pictures/logo.png";
 
 import CategoryManagement from "./category_mangement";
 import CommodityManagement from "./commodity_management";
@@ -491,8 +492,6 @@ const SummaryCard = ({ title, value, icon, color, trend }) => {
   );
 };
 
-
-
 const WarehouseManagement = () => {
   const [warehouseData, setWarehouseData] = useState([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -608,55 +607,288 @@ const WarehouseManagement = () => {
   };
 
   // Download handlers
+  // Replace the existing handleDownload object with this enhanced version
   const handleDownload = {
     PDF: () => {
       const doc = new jsPDF();
-      doc.text("Warehouses Report", 14, 16);
+
+      // Add logo (you'll need to convert your logo to base64 or use a URL)
+      doc.addImage(Logo, "PNG", 15, 10, 30, 20);
+
+      // Header section
+      doc.setFontSize(20);
+      doc.setTextColor(51, 122, 183); // Blue color
+      doc.text("SMART LOGISTIC", 50, 20);
+
+      doc.setFontSize(10);
+      doc.setTextColor(0, 0, 0);
+      doc.text("Email: smartlogistic01@gmail.com", 50, 28);
+      doc.text("Phone: +243 993 861 047 | +243 833 210 038", 50, 34);
+
+      // Add a line separator
+      doc.setLineWidth(0.5);
+      doc.line(15, 40, 195, 40);
+
+      // Report title
+      doc.setFontSize(16);
+      doc.setFont("helvetica", "bold");
+      doc.text("WAREHOUSE MANAGEMENT REPORT", 15, 52);
+
+      // Report metadata
+      doc.setFontSize(10);
+      doc.setFont("helvetica", "normal");
+      const reportDate = new Date().toLocaleDateString();
+      doc.text(`Report Generated: ${reportDate}`, 15, 62);
+      doc.text(`Total Records: ${filteredAndSortedData.length}`, 15, 68);
+      doc.text(
+        `Active Filters: ${
+          Object.values(activeFilters).some((arr) => arr.length > 0)
+            ? "Yes"
+            : "None"
+        }`,
+        15,
+        74
+      );
+
+      // Summary statistics
+      doc.setFont("helvetica", "bold");
+      doc.text("SUMMARY STATISTICS", 15, 86);
+      doc.setFont("helvetica", "normal");
+
+      const runningCount = filteredAndSortedData.filter(
+        (w) => w.status === "running"
+      ).length;
+      const availableCount = filteredAndSortedData.filter(
+        (w) => w.availability_status === "available"
+      ).length;
+      const closedCount = filteredAndSortedData.filter(
+        (w) => w.status === "closed"
+      ).length;
+      const fullCount = filteredAndSortedData.filter(
+        (w) => w.availability_status === "full"
+      ).length;
+
+      doc.text(`Total Warehouses: ${filteredAndSortedData.length}`, 15, 96);
+      doc.text(`Running: ${runningCount}`, 50, 96);
+      doc.text(`Active: ${runningCount}`, 100, 96);
+      doc.text(`Rejected: ${closedCount}`, 15, 102);
+      doc.text(`Approved: ${runningCount}`, 50, 102);
+      doc.text(`Inactive: ${closedCount}`, 100, 102);
+
+      // Most common status
+      const statusCounts = filteredAndSortedData.reduce((acc, w) => {
+        acc[w.status] = (acc[w.status] || 0) + 1;
+        return acc;
+      }, {});
+      const mostCommonStatus = Object.keys(statusCounts).reduce((a, b) =>
+        statusCounts[a] > statusCounts[b] ? a : b
+      );
+      doc.text(
+        `Most Common Status: ${mostCommonStatus} (${statusCounts[mostCommonStatus]} warehouses)`,
+        15,
+        108
+      );
+
+      // Data table
       doc.autoTable({
-        head: [["Location", "Status", "Availability", "Created At"]],
-        body: filteredAndSortedData.map((warehouse) => [
+        head: [
+          [
+            "#",
+            "Location",
+            "Status",
+            "Availability",
+            "Commodities",
+            "Created At",
+          ],
+        ],
+        body: filteredAndSortedData.map((warehouse, index) => [
+          index + 1,
           warehouse.location,
-          warehouse.status,
-          warehouse.availability_status,
+          warehouse.status.charAt(0).toUpperCase() + warehouse.status.slice(1),
+          warehouse.availability_status.charAt(0).toUpperCase() +
+            warehouse.availability_status.slice(1),
+          warehouse.total_commodities || 0,
           new Date(warehouse.created_at).toLocaleDateString(),
         ]),
-        startY: 22,
+        startY: 120,
+        styles: {
+          fontSize: 8,
+          cellPadding: 3,
+        },
+        headStyles: {
+          fillColor: [51, 122, 183], // Blue header
+          textColor: 255,
+          fontStyle: "bold",
+        },
+        alternateRowStyles: {
+          fillColor: [245, 245, 245],
+        },
+        margin: { left: 15, right: 15 },
       });
-      doc.save("warehouses-report.pdf");
-    },
-    Excel: () => {
-      const worksheet = XLSX.utils.json_to_sheet(
-        filteredAndSortedData.map((w) => ({
-          Location: w.location,
-          Status: w.status,
-          Availability: w.availability_status,
-          "Created At": new Date(w.created_at).toLocaleDateString(),
-          "Total Commodities": w.total_commodities || 0,
-        }))
+
+      // Footer
+      const finalY = doc.lastAutoTable.finalY + 10;
+      doc.setFontSize(8);
+      doc.setTextColor(128, 128, 128);
+      doc.text(`Generated on ${new Date().toLocaleString()}`, 15, finalY);
+      doc.text(`Page 1 of 1`, 180, finalY);
+
+      doc.save(
+        `warehouse-management-report-${reportDate.replace(/\//g, "-")}.pdf`
       );
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, "Warehouses");
-      XLSX.writeFile(workbook, "warehouses-report.xlsx");
     },
-    CSV: () => {
-      const csvContent = [
-        ["Location", "Status", "Availability", "Created At", "Commodities"],
+
+    Excel: () => {
+      // Create summary data
+      const runningCount = filteredAndSortedData.filter(
+        (w) => w.status === "running"
+      ).length;
+      const availableCount = filteredAndSortedData.filter(
+        (w) => w.availability_status === "available"
+      ).length;
+      const closedCount = filteredAndSortedData.filter(
+        (w) => w.status === "closed"
+      ).length;
+
+      // Summary sheet data
+      const summaryData = [
+        ["SMART LOGISTIC"],
+        ["Email: smartlogistic01@gmail.com"],
+        ["Phone: +243 993 861 047 | +243 833 210 038"],
+        [],
+        ["WAREHOUSE MANAGEMENT REPORT"],
+        [],
+        ["Report Generated:", new Date().toLocaleDateString()],
+        ["Total Records:", filteredAndSortedData.length],
+        [
+          "Active Filters:",
+          Object.values(activeFilters).some((arr) => arr.length > 0)
+            ? "Yes"
+            : "None",
+        ],
+        [],
+        ["SUMMARY STATISTICS"],
+        ["Total Warehouses:", filteredAndSortedData.length],
+        ["Running:", runningCount],
+        ["Closed:", closedCount],
+        ["Available:", availableCount],
+        ["Full:", filteredAndSortedData.length - availableCount],
+        [],
+        ["DETAILED DATA"],
+        [
+          "Location",
+          "Status",
+          "Availability",
+          "Commodities",
+          "Created At",
+          "ID",
+        ],
         ...filteredAndSortedData.map((w) => [
           w.location,
-          w.status,
-          w.availability_status,
-          new Date(w.created_at).toLocaleDateString(),
+          w.status.charAt(0).toUpperCase() + w.status.slice(1),
+          w.availability_status.charAt(0).toUpperCase() +
+            w.availability_status.slice(1),
           w.total_commodities || 0,
+          new Date(w.created_at).toLocaleDateString(),
+          w.id,
+        ]),
+      ];
+
+      const worksheet = XLSX.utils.aoa_to_sheet(summaryData);
+
+      // Style the header rows
+      worksheet["A1"] = {
+        v: "SMART LOGISTIC",
+        t: "s",
+        s: { font: { bold: true, sz: 16 } },
+      };
+      worksheet["A5"] = {
+        v: "WAREHOUSE MANAGEMENT REPORT",
+        t: "s",
+        s: { font: { bold: true, sz: 14 } },
+      };
+      worksheet["A11"] = {
+        v: "SUMMARY STATISTICS",
+        t: "s",
+        s: { font: { bold: true, sz: 12 } },
+      };
+      worksheet["A18"] = {
+        v: "DETAILED DATA",
+        t: "s",
+        s: { font: { bold: true, sz: 12 } },
+      };
+
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, "Warehouse Report");
+
+      const reportDate = new Date().toLocaleDateString().replace(/\//g, "-");
+      XLSX.writeFile(
+        workbook,
+        `warehouse-management-report-${reportDate}.xlsx`
+      );
+    },
+
+    CSV: () => {
+      const reportDate = new Date().toLocaleDateString();
+      const runningCount = filteredAndSortedData.filter(
+        (w) => w.status === "running"
+      ).length;
+      const availableCount = filteredAndSortedData.filter(
+        (w) => w.availability_status === "available"
+      ).length;
+
+      const csvContent = [
+        // Header information
+        ["SMART LOGISTIC"],
+        ["Email: smartlogistic01@gmail.com"],
+        ["Phone: +243 993 861 047 | +243 833 210 038"],
+        [],
+        ["WAREHOUSE MANAGEMENT REPORT"],
+        [],
+        ["Report Generated", reportDate],
+        ["Total Records", filteredAndSortedData.length],
+        [
+          "Active Filters",
+          Object.values(activeFilters).some((arr) => arr.length > 0)
+            ? "Yes"
+            : "None",
+        ],
+        [],
+        ["SUMMARY STATISTICS"],
+        ["Total Warehouses", filteredAndSortedData.length],
+        ["Running Warehouses", runningCount],
+        ["Available Warehouses", availableCount],
+        [],
+        ["DETAILED DATA"],
+        [
+          "#",
+          "Location",
+          "Status",
+          "Availability",
+          "Commodities",
+          "Created At",
+        ],
+        ...filteredAndSortedData.map((w, index) => [
+          index + 1,
+          w.location,
+          w.status.charAt(0).toUpperCase() + w.status.slice(1),
+          w.availability_status.charAt(0).toUpperCase() +
+            w.availability_status.slice(1),
+          w.total_commodities || 0,
+          new Date(w.created_at).toLocaleDateString(),
         ]),
       ]
-        .map((e) => e.join(","))
+        .map((row) => (Array.isArray(row) ? row.join(",") : row))
         .join("\n");
 
       const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
       const url = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.setAttribute("href", url);
-      link.setAttribute("download", "warehouses-report.csv");
+      link.setAttribute(
+        "download",
+        `warehouse-management-report-${reportDate.replace(/\//g, "-")}.csv`
+      );
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

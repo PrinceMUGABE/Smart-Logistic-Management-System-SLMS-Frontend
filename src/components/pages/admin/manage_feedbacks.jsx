@@ -41,6 +41,7 @@ import {
   BarChart,
   Bar,
 } from "recharts";
+import Logo from "../../../assets/pictures/logo.png";
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -188,35 +189,186 @@ function Admin_Manage_Feedbacks() {
     }
   };
 
-  const handleDownload = {
-    PDF: () => {
-      const doc = new jsPDF();
-      doc.autoTable({ html: "#feedback-table" });
-      doc.save("feedbacks.pdf");
-    },
-    Excel: () => {
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(
-        workbook,
-        XLSX.utils.json_to_sheet(feedbackData),
-        "Feedbacks"
-      );
-      XLSX.writeFile(workbook, "feedbacks.xlsx");
-    },
-    CSV: () => {
-      const csvContent =
-        "data:text/csv;charset=utf-8," +
-        Object.keys(feedbackData[0]).join(",") +
-        "\n" +
-        feedbackData.map((row) => Object.values(row).join(",")).join("\n");
-      const link = document.createElement("a");
-      link.setAttribute("href", encodeURI(csvContent));
-      link.setAttribute("download", "feedbacks.csv");
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-    },
-  };
+  // Replace the existing handleDownload object with this enhanced version
+
+const handleDownload = {
+  PDF: () => {
+    const doc = new jsPDF();
+    
+    // Add logo (you'll need to convert your logo to base64 or use a URL)
+    doc.addImage(Logo, 'PNG', 15, 15, 25, 25);
+    
+    // Header
+    doc.setFontSize(16);
+    doc.setTextColor(40, 40, 40);
+    doc.text('SMART LOGISTIC', 50, 25);
+    
+    doc.setFontSize(10);
+    doc.text('Email: smartlogistic01@gmail.com', 50, 32);
+    doc.text('Phone: +243 993 861 047 | +243 833 210 038', 50, 37);
+    
+    // Title
+    doc.setFontSize(14);
+    doc.setTextColor(0, 0, 0);
+    doc.text('FEEDBACK MANAGEMENT REPORT', 15, 55);
+    
+    // Report info
+    doc.setFontSize(10);
+    doc.text(`Report Generated: ${new Date().toLocaleDateString()}`, 15, 65);
+    doc.text(`Total Records: ${filteredData.length}`, 15, 70);
+    doc.text(`Active Filters: ${activeFilters > 0 ? 'Yes' : 'None'}`, 15, 75);
+    
+    // Summary Statistics
+    doc.setFontSize(12);
+    doc.text('SUMMARY STATISTICS', 15, 90);
+    
+    doc.setFontSize(10);
+    doc.text(`Total Feedbacks: ${summaryStats.totalFeedbacks}`, 15, 100);
+    doc.text(`Average Rating: ${summaryStats.averageRating}`, 100, 100);
+    doc.text(`Highest Rated: ${summaryStats.highestRated?.rating || 'N/A'} stars`, 15, 105);
+    doc.text(`Lowest Rated: ${summaryStats.lowestRated?.rating || 'N/A'} stars`, 100, 105);
+    
+    // Rating distribution
+    const ratingCounts = [1, 2, 3, 4, 5].map(rating => ({
+      rating,
+      count: filteredData.filter(f => f.rating === rating).length
+    }));
+    
+    doc.text('Rating Distribution:', 15, 115);
+    ratingCounts.forEach((item, index) => {
+      doc.text(`${item.rating} Star${item.rating > 1 ? 's' : ''}: ${item.count}`, 15 + (index * 35), 125);
+    });
+    
+    // Prepare table data from filtered results
+    const tableData = filteredData.map((feedback, index) => [
+      index + 1,
+      feedback.rating,
+      feedback.comment.length > 30 ? feedback.comment.substring(0, 30) + '...' : feedback.comment,
+      feedback.created_by?.phone_number || 'N/A',
+      feedback.order ? `${feedback.order.origin} to ${feedback.order.warehouse_detail?.location}` : 'N/A',
+      new Date(feedback.created_at).toLocaleDateString()
+    ]);
+    
+    // Add table
+    doc.autoTable({
+      startY: 135,
+      head: [['#', 'Rating', 'Comment', 'User', 'Route', 'Date']],
+      body: tableData,
+      theme: 'grid',
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [66, 139, 202] }
+    });
+    
+    // Footer
+    const finalY = doc.lastAutoTable.finalY + 10;
+    doc.setFontSize(8);
+    doc.text(`Generated on ${new Date().toLocaleDateString()}, ${new Date().toLocaleTimeString()}`, 15, finalY);
+    doc.text(`Page 1 of 1`, doc.internal.pageSize.width - 30, finalY);
+    
+    doc.save('feedback_report.pdf');
+  },
+  
+  Excel: () => {
+    // Create workbook
+    const workbook = XLSX.utils.book_new();
+    
+    // Prepare summary data
+    const summaryData = [
+      ['FEEDBACK MANAGEMENT REPORT'],
+      [''],
+      ['Report Generated:', new Date().toLocaleDateString()],
+      ['Total Records:', filteredData.length],
+      ['Active Filters:', activeFilters > 0 ? 'Yes' : 'None'],
+      [''],
+      ['SUMMARY STATISTICS'],
+      ['Total Feedbacks:', summaryStats.totalFeedbacks],
+      ['Average Rating:', summaryStats.averageRating],
+      ['Highest Rated:', `${summaryStats.highestRated?.rating || 'N/A'} stars`],
+      ['Lowest Rated:', `${summaryStats.lowestRated?.rating || 'N/A'} stars`],
+      [''],
+      ['RATING DISTRIBUTION'],
+      ...([1, 2, 3, 4, 5].map(rating => [
+        `${rating} Star${rating > 1 ? 's' : ''}:`,
+        filteredData.filter(f => f.rating === rating).length
+      ])),
+      [''],
+      ['DETAILED DATA']
+    ];
+    
+    // Prepare detailed data
+    const detailedData = [
+      ['#', 'Rating', 'Comment', 'User Phone', 'User Email', 'Order Route', 'Commodity', 'Date Created'],
+      ...filteredData.map((feedback, index) => [
+        index + 1,
+        feedback.rating,
+        feedback.comment,
+        feedback.created_by?.phone_number || 'N/A',
+        feedback.created_by?.email || 'N/A',
+        feedback.order ? `${feedback.order.origin} to ${feedback.order.warehouse_detail?.location}` : 'N/A',
+        feedback.order?.commodity_detail?.name || 'N/A',
+        new Date(feedback.created_at).toLocaleDateString()
+      ])
+    ];
+    
+    // Create summary sheet
+    const summarySheet = XLSX.utils.aoa_to_sheet(summaryData);
+    XLSX.utils.book_append_sheet(workbook, summarySheet, 'Summary');
+    
+    // Create detailed data sheet
+    const detailedSheet = XLSX.utils.aoa_to_sheet(detailedData);
+    XLSX.utils.book_append_sheet(workbook, detailedSheet, 'Detailed Data');
+    
+    XLSX.writeFile(workbook, 'feedback_report.xlsx');
+  },
+  
+  CSV: () => {
+    // Create header with report info
+    const reportHeader = [
+      'FEEDBACK MANAGEMENT REPORT',
+      `Report Generated: ${new Date().toLocaleDateString()}`,
+      `Total Records: ${filteredData.length}`,
+      `Active Filters: ${activeFilters > 0 ? 'Yes' : 'None'}`,
+      '',
+      'SUMMARY STATISTICS',
+      `Total Feedbacks: ${summaryStats.totalFeedbacks}`,
+      `Average Rating: ${summaryStats.averageRating}`,
+      `Highest Rated: ${summaryStats.highestRated?.rating || 'N/A'} stars`,
+      `Lowest Rated: ${summaryStats.lowestRated?.rating || 'N/A'} stars`,
+      '',
+      'RATING DISTRIBUTION',
+      ...([1, 2, 3, 4, 5].map(rating => 
+        `${rating} Star${rating > 1 ? 's' : ''}: ${filteredData.filter(f => f.rating === rating).length}`
+      )),
+      '',
+      'DETAILED DATA',
+      'Index,Rating,Comment,User Phone,User Email,Order Route,Commodity,Date Created'
+    ].join('\n');
+    
+    // Create data rows from filtered data
+    const csvData = filteredData.map((feedback, index) => [
+      index + 1,
+      feedback.rating,
+      `"${feedback.comment.replace(/"/g, '""')}"`, // Escape quotes in comments
+      feedback.created_by?.phone_number || 'N/A',
+      feedback.created_by?.email || 'N/A',
+      feedback.order ? `"${feedback.order.origin} to ${feedback.order.warehouse_detail?.location}"` : 'N/A',
+      feedback.order?.commodity_detail?.name || 'N/A',
+      new Date(feedback.created_at).toLocaleDateString()
+    ].join(','));
+    
+    const csvContent = reportHeader + '\n' + csvData.join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', 'feedback_report.csv');
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  },
+};
 
   const handleAddUpdateFeedback = async (e) => {
     e.preventDefault();
