@@ -25,7 +25,7 @@ import {
   faCogs,
   faBox,
 } from "@fortawesome/free-solid-svg-icons";
-import Logo from "../../../assets/pictures/logo.png";
+import Logo from "../../../assets/pictures/Logo.png";
 
 import {
   faEdit,

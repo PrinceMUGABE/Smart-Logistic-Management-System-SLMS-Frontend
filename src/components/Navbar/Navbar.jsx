@@ -5,7 +5,7 @@ import React, { useState } from "react";
 import { HiMenuAlt3, HiMenuAlt1 } from "react-icons/hi";
 import { FaGlobe, FaUser } from "react-icons/fa";
 import ResponsiveMenu from "./ResponsiveMenu";
-import Logo from "../../assets/pictures/logo.png";
+import Logo from "../../assets/pictures/Logo.png";
 import { Link, useNavigate } from "react-router-dom";
 
 export const MenuLinks = [

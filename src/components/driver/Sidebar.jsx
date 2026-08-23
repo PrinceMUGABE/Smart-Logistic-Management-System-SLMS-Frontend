@@ -4,7 +4,7 @@ import { FaUsers } from 'react-icons/fa';
 import { MdDashboard } from 'react-icons/md';
 import { BiSolidInstitution } from 'react-icons/bi';
 import { Link } from 'react-router-dom';
-import Logo from '../../assets/pictures/logo.png';
+import Logo from '../../assets/pictures/Logo.png';
 import { FcDepartment } from 'react-icons/fc';
 import { HiMiniClipboardDocument } from "react-icons/hi2";
 import { SiGoogleclassroom } from "react-icons/si";

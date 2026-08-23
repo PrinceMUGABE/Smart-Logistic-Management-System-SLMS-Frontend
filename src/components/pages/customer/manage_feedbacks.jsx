@@ -7,7 +7,8 @@ import jsPDF from "jspdf";
 import "jspdf-autotable";
 import * as XLSX from "xlsx";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import "../../../assets/pictures/logo.png";
+// import "../../../assets/pictures/Logo.png";
+import Logo from "../../../assets/pictures/Logo.png";
 import {
   faEdit,
   faTrash,

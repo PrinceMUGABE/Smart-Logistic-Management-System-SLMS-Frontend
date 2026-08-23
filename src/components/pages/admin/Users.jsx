@@ -14,7 +14,7 @@ import {
   faChartBar, faChartArea
 } from "@fortawesome/free-solid-svg-icons";
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, AreaChart, Area, Pie, Cell } from 'recharts';
-import Logo from "../../../assets/pictures/logo.png"
+import Logo from "../../../assets/pictures/Logo.png"
 
 class ErrorBoundary extends React.Component {
   constructor(props) {

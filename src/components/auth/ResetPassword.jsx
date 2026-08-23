@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, CheckCircle, ArrowLeft, Eye, EyeOff } from 'lucide-react';
 import axios from 'axios';
-import loginImage from "../../assets/pictures/logo.png";
+import loginImage from "../../assets/pictures/Logo.png";
 
 const ResetPassword = () => {
   const navigate = useNavigate();

@@ -7,7 +7,7 @@ import {
 } from "react-icons/fa";
 import { MdEmail, MdLocationOn, MdDashboard, MdAnalytics } from "react-icons/md";
 import { BiData, BiPackage } from "react-icons/bi";
-import logoImg from "../../assets/pictures/logo.png";
+import logoImg from "../../assets/pictures/Logo.png";
 
 const Footer = () => {
   return (

@@ -23,7 +23,7 @@ import {
 } from "react-icons/md";
 import { X, Menu } from "lucide-react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import Logo from "../../assets/pictures/logo.png";
+import Logo from "../../assets/pictures/Logo.png";
 
 function Sidebar() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);

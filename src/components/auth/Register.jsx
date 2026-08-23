@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { Phone, Mail, Lock, Eye, EyeOff, Home, ArrowLeft } from "lucide-react";
-import loginImage from '../../assets/pictures/logo.png';
+import loginImage from '../../assets/pictures/Logo.png';
 
 const Register = () => {
   const navigate = useNavigate();

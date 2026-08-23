@@ -52,7 +52,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import Logo from "../../../assets/pictures/logo.png";
+import Logo from "../../../assets/pictures/Logo.png";
 
 import CategoryManagement from "./category_mangement";
 import CommodityManagement from "./commodity_management";

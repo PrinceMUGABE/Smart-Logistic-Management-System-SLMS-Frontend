@@ -44,7 +44,7 @@ import {
   Pie,
   Cell,
 } from "recharts";
-import Logo from "../../../assets/pictures/logo.png";
+import Logo from "../../../assets/pictures/Logo.png";
 
 // ErrorBoundary component remains the same
 class ErrorBoundary extends React.Component {

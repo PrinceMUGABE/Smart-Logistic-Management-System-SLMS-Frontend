@@ -4,7 +4,7 @@ import { FaUserCircle, FaUsers, FaSignOutAlt, FaRoute, FaExchangeAlt, FaComments
 import { MdDashboard, MdInventory, MdInsights } from "react-icons/md";
 import { X, Menu } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
-import Logo from "../../assets/pictures/logo.png";
+import Logo from "../../assets/pictures/Logo.png";
 
 const Dispatcher_Header = () => {
   const [isOpen, setIsOpen] = useState(false);
